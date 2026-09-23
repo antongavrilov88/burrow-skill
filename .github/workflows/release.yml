@@ -1,0 +1,28 @@
+# Tag v1.2.3 on main -> GitHub Release with burrow-skill.zip (the skill only, no site).
+# Tag v1.2.3-rc.1 -> pre-release.
+name: release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sanity-check the skill
+        run: |
+          python3 -m py_compile scripts/*.py scripts/payload/common/*.py
+          bash -n scripts/payload/exit/install.sh scripts/payload/relay/install.sh scripts/payload/common/*.sh
+          grep -q '^name: burrow' SKILL.md
+      - name: Pack the skill
+        run: |
+          mkdir -p dist/burrow
+          cp -r SKILL.md LICENSE README.md references scripts dist/burrow/
+          (cd dist && zip -qr burrow-skill.zip burrow)
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/burrow-skill.zip
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-rc') }}

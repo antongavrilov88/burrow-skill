@@ -1,0 +1,23 @@
+# Runs on every PR and on pushes to dev/main: syntax checks for the skill's scripts,
+# and a check that the landing has no leftover placeholders.
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python and bash syntax
+        run: |
+          python3 -m py_compile scripts/*.py scripts/payload/common/*.py
+          bash -n scripts/payload/exit/install.sh scripts/payload/relay/install.sh scripts/payload/common/*.sh
+      - name: No secrets in the tree
+        run: |
+          ! grep -rnE 'dop_v1_[A-Za-z0-9]{20,}|tk_[a-z0-9]{20,}|BEGIN (RSA|OPENSSH|EC) PRIVATE' --exclude-dir=.git . || (echo "possible secret committed" && exit 1)
+      - name: No placeholders on main
+        if: github.ref == 'refs/heads/main'
+        run: |
+          ! grep -rn '{{[A-Z_]*}}' README.md SECURITY.md docs/ || (echo "fill the placeholders before main" && exit 1)
