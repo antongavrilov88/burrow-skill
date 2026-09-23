@@ -1,0 +1,14 @@
+name: Feature / improvement
+description: Something the skill should do or do better
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The situation
+      description: Who gets stuck, where, and what they'd need instead.
+    validations: { required: true }
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal (optional)

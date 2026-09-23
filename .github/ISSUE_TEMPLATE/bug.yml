@@ -1,0 +1,26 @@
+name: Bug
+description: The skill or an installer did something wrong
+labels: [bug]
+body:
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where
+      options: [Claude Code, Claude desktop app (Cowork), claude.ai web, the installer on the server, the landing page]
+    validations: { required: true }
+  - type: dropdown
+    id: layout
+    attributes:
+      label: Layout
+      options: [single server, relay + exit, not sure]
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you asked, what Claude or the script did, what you expected. Paste the last ~20 lines of the install log if you have them. Never paste params.json, tokens or keys.
+    validations: { required: true }
+  - type: input
+    id: provider
+    attributes:
+      label: Hosting provider and OS
+      placeholder: DigitalOcean, Ubuntu 24.04

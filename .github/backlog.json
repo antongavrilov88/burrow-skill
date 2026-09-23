@@ -1,0 +1,14 @@
+[
+  {"title": "Fill placeholders (GitHub repo, Telegram, LinkedIn, site URL, email)", "labels": ["docs","phase:1"], "body": "README.md, SECURITY.md, docs/index.html, .github/ISSUE_TEMPLATE/config.yml. CI blocks main while any `{{…}}` remains."},
+  {"title": "Enable branch protection on main (PR + green CI)", "labels": ["phase:1"], "body": "Require pull request, require `ci / check`, no force-push."},
+  {"title": "Custom domain for the landing", "labels": ["area:landing","phase:1"], "body": "Buy or pick a domain, add CNAME in docs/, set it in Pages settings, enforce HTTPS."},
+  {"title": "Publish launch posts (TG RU, LinkedIn EN, Claude Code community)", "labels": ["phase:1"], "body": "Drafts are in the project doc. Confirm the 'hasn't gone down since' claim before LinkedIn."},
+  {"title": "Tag v0.1.0 and verify the release zip installs on claude.ai", "labels": ["phase:1","area:skill"], "body": "Tag on main → release workflow → download burrow-skill.zip → Settings → Capabilities → Skills → upload → run 'set up my own VPN' in a fresh chat."},
+  {"title": "Translate SKILL.md and references to English", "labels": ["area:i18n","area:skill","enhancement"], "body": "The skill body is Russian-only. Claude follows it in any language, but English-speaking contributors can't review it. Keep RU as the source of truth until EN is verified on a real run."},
+  {"title": "Hetzner provisioning parity (create server + DNS via API)", "labels": ["area:provider","enhancement"], "body": "Only DigitalOcean is automated. Hetzner is the most-requested alternative and cheaper. hcloud API for servers; DNS stays at the registrar."},
+  {"title": "Take-over form: real backend instead of composed Telegram message", "labels": ["area:landing","phase:2"], "body": "v1 composes a message the visitor pastes into Telegram. When the MCP engine exists, post to it and store the lead."},
+  {"title": "Landing: mobile nav (section links are hidden under 1040px)", "labels": ["area:landing","good first issue"], "body": "The three section links disappear on tablet/phone. Add a compact menu or inline anchors under the hero."},
+  {"title": "Add Spanish translation to the landing", "labels": ["area:i18n","area:landing","good first issue"], "body": "One dictionary in the script + one <option>. Copy is ~90 strings."},
+  {"title": "Decide: keep 'five minutes' tagline or soften", "labels": ["area:landing","docs"], "body": "Reality is 5 min clicking + 10 min unattended + DNS wait. The fine-print line under the CTAs is honest; the headline is generous."},
+  {"title": "MCP engine: design the tool surface", "labels": ["phase:2","enhancement"], "body": "Which steps of SKILL.md become MCP tools callable from the site's take-over flow; what stays human. Starts only after paying take-over requests exist."}
+]
