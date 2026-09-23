@@ -1,0 +1,8 @@
+[Unit]
+Description=Проверка готовности раз в неделю
+[Timer]
+OnCalendar=Mon 01:30:00
+RandomizedDelaySec=900
+Persistent=true
+[Install]
+WantedBy=timers.target

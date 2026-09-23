@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__SITE_TITLE__</title>
+<style>
+:root{color-scheme:light dark;--bg:#fbfaf8;--fg:#16150f;--dim:#5d5b54;--line:#e5e3dc;--accent:#2f6f4f}
+@media(prefers-color-scheme:dark){:root{--bg:#14140f;--fg:#eceadf;--dim:#a3a096;--line:#2b2b24}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);
+ font:16px/1.65 ui-serif,Georgia,"Times New Roman",serif;-webkit-text-size-adjust:100%}
+.wrap{max-width:44rem;margin:0 auto;padding:3.5rem 1.25rem 5rem}
+h1{font-size:1.6rem;margin:0 0 .2rem;letter-spacing:-.01em}
+.sub{color:var(--dim);font-size:.95rem;margin:0 0 2.5rem}
+article{border-top:1px solid var(--line);padding:1.75rem 0}
+h2{font-size:1.12rem;margin:0 0 .35rem;font-weight:600}
+time{display:block;color:var(--dim);font-size:.82rem;margin-bottom:.7rem;
+ font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+p{margin:0 0 .85rem}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;
+ background:color-mix(in srgb,var(--fg) 7%,transparent);padding:.1em .35em;border-radius:3px}
+footer{border-top:1px solid var(--line);margin-top:2.5rem;padding-top:1.25rem;
+ color:var(--dim);font-size:.85rem}
+a{color:var(--accent)}
+</style></head><body><div class="wrap">
+
+<h1>__SITE_TITLE__</h1>
+<p class="sub">__SITE_TAGLINE__</p>
+
+<article>
+<h2>Зачем маленькому серверу два диска</h2>
+<time>__DATE_1__</time>
+<p>Долго держал всё на одном разделе и каждый раз при обновлении ядра нервничал,
+хватит ли места. Оказалось, дело не в размере, а в том, что логи и кэш пакетов
+растут независимо от всего остального и в самый неподходящий момент.</p>
+<p>Разнёс <code>/var/log</code> на отдельный том с квотой. Теперь переполнение логов
+портит только логи, а не весь сервер. Мелочь, но спится спокойнее.</p>
+</article>
+
+<article>
+<h2>Заметка про MTU</h2>
+<time>__DATE_2__</time>
+<p>Классическая история: соединение устанавливается, мелкие запросы проходят,
+а большие страницы висят. Почти всегда это MTU — пакет не проходит целиком,
+а сообщение о том, что его надо порезать, где-то теряется.</p>
+<p>Лечится уменьшением MTU на интерфейсе. Значение <code>1280</code> работает
+практически везде и стоит нескольких процентов пропускной способности —
+дешёвая страховка от очень раздражающего класса проблем.</p>
+</article>
+
+<article>
+<h2>Резервная копия, которую ни разу не восстанавливали, — не резервная копия</h2>
+<time>__DATE_3__</time>
+<p>Бэкапы делались исправно два года. Когда понадобилось восстановить один
+файл, выяснилось, что архив шифруется ключом, который лежал на том же диске.</p>
+<p>С тех пор раз в месяц по расписанию поднимается тестовое восстановление
+в отдельную папку и сверяются контрольные суммы. Пара минут машинного времени
+против неприятного открытия в худший день.</p>
+</article>
+
+<footer>__SITE_TITLE__ · __DOMAIN__ · личные заметки, без комментариев и трекеров</footer>
+</div></body></html>

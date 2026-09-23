@@ -1,0 +1,16 @@
+[Unit]
+Description=VPN monitor: счётчики байт по пирам и панель управления
+After=network-online.target wg-quick@wg-clients.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/sbin/vpn-monitor.py
+Restart=always
+RestartSec=5
+NoNewPrivileges=yes
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

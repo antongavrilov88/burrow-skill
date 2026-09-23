@@ -1,0 +1,5 @@
+[Unit]
+Description=Еженедельная проверка готовности к отказу (без падения)
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/vpn-drill.sh --check

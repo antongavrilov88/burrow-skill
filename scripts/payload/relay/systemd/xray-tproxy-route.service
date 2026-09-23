@@ -1,0 +1,18 @@
+[Unit]
+Description=Маршрутизация и nftables для перехвата трафика клиентов в Xray
+Before=xray.service
+After=network-online.target nftables.service wg-quick@wg-clients.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c 'ip rule show | grep -q "fwmark 0x1 lookup 101" || ip rule add fwmark 1 pref 100 lookup 101'
+ExecStart=/bin/sh -c 'ip route show table 101 | grep -q "local default dev lo" || ip route add local default dev lo table 101'
+ExecStart=/usr/sbin/nft -f /etc/xray/xray-tproxy.nft
+ExecStop=/bin/sh -c '/usr/sbin/nft delete table ip xray_tproxy || true'
+ExecStop=/bin/sh -c 'ip rule del fwmark 1 pref 100 lookup 101 || true'
+ExecStop=/bin/sh -c 'ip route del local default dev lo table 101 || true'
+
+[Install]
+WantedBy=multi-user.target

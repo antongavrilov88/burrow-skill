@@ -1,0 +1,13 @@
+[Unit]
+Description=Приём WireGuard-клиентов ещё и на udp/443 (для сетей, режущих высокие порты)
+After=network-online.target nftables.service wg-quick@wg-clients.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /etc/xray/wgports.nft
+ExecStop=/bin/sh -c '/usr/sbin/nft delete table ip wgports || true'
+
+[Install]
+WantedBy=multi-user.target

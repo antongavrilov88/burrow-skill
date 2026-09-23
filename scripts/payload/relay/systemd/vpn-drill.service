@@ -1,0 +1,5 @@
+[Unit]
+Description=Учебное падение основного канала с проверкой автооткота
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/vpn-drill.sh

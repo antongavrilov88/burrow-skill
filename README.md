@@ -1,0 +1,167 @@
+# Burrow
+
+**Your own VPN in five minutes. No shared servers, no company to block.**
+
+Burrow is a free [Claude](https://claude.ai) skill that turns a $6 cloud server you rent into a personal VPN that survives 2026-grade blocking. You create the server and buy a domain; Claude installs everything, hands you a web panel, and you add phones and laptops by scanning a QR code.
+
+The server is yours. The domain is yours. The keys never leave your machine. There is no Burrow account, no Burrow backend, and nothing for anyone to shut down except your own server — which you can rebuild in fifteen minutes.
+
+> Made for one situation: people you care about live where the internet is filtered, and every "install our app" VPN keeps dying. Works in both directions — reaching services back home from abroad, or reaching the world from behind a filter.
+
+---
+
+## What you get
+
+- **A protocol that looks like ordinary web traffic.** VLESS + XHTTP + REALITY on Xray, on port 443, with a real website under your own domain as the cover. To a probe your server *is* a normal HTTPS site, because it is one.
+- **WireGuard for the devices.** Phones, laptops, TVs and routers connect with the official free WireGuard app. Scan a QR, flip a switch, done. A second port on UDP/443 for hotel and mobile networks that cut everything else.
+- **A web panel** (reachable only from inside the VPN): who is online, how much they used, add or remove a device with a QR code, manage the list of domains that bypass the tunnel.
+- **A watchdog** that probes the tunnel every minute, restarts what died, fails over to the direct route and back, and pushes a notification to your phone. A monthly fire drill (a deliberate two-minute outage) proves the failover actually works, not just "is configured".
+- **Split routing.** Banks and government sites that break when they see a foreign IP go direct; everything else goes through the tunnel. Optional per-country GeoIP rule.
+- **Push notifications** through your own [ntfy](https://ntfy.sh) instance on the same server (public ntfy.sh as fallback).
+- **A one-page handout** for the person who will actually use it, in plain words, generated at the end.
+
+### Two layouts
+
+**Single server** — you, or a few people, anywhere. Devices connect straight to the server abroad. Simplest and cheapest.
+
+```
+devices ──WireGuard──▶ your server abroad ──▶ internet
+devices ──VLESS+REALITY──┘   (for Hiddify / v2rayNG users)
+```
+
+**Relay + exit** — for family inside a filtered country whose devices you can't keep reconfiguring. Devices talk WireGuard to a cheap server *inside* the country; that relay carries one disguised connection across the border. When the exit gets banned you replace it in fifteen minutes and nobody at home touches their phone.
+
+```
+devices ──WireGuard──▶ relay (home country) ──VLESS+XHTTP+REALITY──▶ exit (abroad) ──▶ internet
+                              └──────▶ direct (automatic fallback)
+```
+
+Claude picks the layout from one plain-language question ("who will use this and where are they?"). You don't need to know what any of the above means.
+
+---
+
+## Install
+
+**Claude Code** (terminal):
+
+```bash
+git clone https://github.com/{{GITHUB_REPO}} ~/.claude/skills/burrow
+```
+
+Then in any Claude Code session: *"set up my own VPN"*, *"подними мне VPN"*, or `/burrow`.
+
+**Claude.ai / desktop app:** download this repo as a ZIP, then Settings → Capabilities → Skills → upload. Works best from the desktop app (Cowork), which can run the scripts and talk to your server for you.
+
+Requires Python 3 on the machine where Claude runs the skill. No other dependencies — the scripts are pure standard library, including the X25519 key generation.
+
+---
+
+## What you will do yourself
+
+The skill does everything it technically can. These four things it can't, because they need your card, your email or your phone in hand — and by design Burrow never does them for you:
+
+1. **Create a hosting account** and attach a payment method. Written for DigitalOcean (`$6/month`, 1 TB traffic), and any Ubuntu 24.04 VPS works — Hetzner, Vultr, and others.
+2. **Give Claude an API token** for that account (so it can create the server instead of dictating twenty clicks), and revoke it afterwards. The skill reminds you.
+3. **Buy a domain** — any cheap, neutral name you don't care about. It is the cover story, and a domain can get banned along with the IP.
+4. **Point the domain** at the server: either delegate it to DigitalOcean nameservers or add three A-records by hand. Step-by-step instructions for the common registrars are built in.
+
+For the relay layout you also rent a small VPS in the home country and paste one command into a terminal; the skill walks you through that too, including "the password won't show while you type".
+
+Budget: about **$6–7/month** for the single layout, plus a domain (~$10/year); the relay adds a ~$4–8/month VPS.
+
+---
+
+## What the skill puts on your server
+
+Everything is installed by a self-contained `setup-exit.sh` / `setup-relay.sh` that Claude builds locally and delivers via cloud-init or SSH. The installers are idempotent — run them again to fix a half-finished install; existing clients, certificates and tokens are never overwritten.
+
+**Exit server (abroad)**
+
+| Component | Purpose |
+|---|---|
+| `xray` (pinned version) | VLESS + XHTTP + REALITY inbound on `:443/tcp`, access logging **off** |
+| `nginx` on `:80` and `127.0.0.1:8443` | Let's Encrypt challenges, HTTPS redirect, the cover site that REALITY hands to probes |
+| `certbot` + renewal timer | Real certificates for your domain and the `push.` subdomain |
+| `ntfy` (optional, own domain) | Self-hosted push notifications with per-user access control |
+| `nftables` | Default-deny inbound; opens 22, 80, 443 (+ WireGuard ports in single layout) |
+| `/var/www/<domain>/` | A generic self-hosting-notes site as cover. **Rewrite it** — the same template on many domains becomes a fingerprint |
+| `/root/vpn-kit/exit-summary.txt` | The connection parameters, mode 600 |
+
+**Relay (home country) or the single server**
+
+| Component | Purpose |
+|---|---|
+| WireGuard `wg-clients` | Device tunnel, `10.67.0.0/24`, port 51821 + redirect from UDP/443 |
+| `xray` in TPROXY mode + `nftables` | Routes selected devices (`proxied_src` set) through the disguised tunnel; everyone else goes direct |
+| `vpn-monitor` (`:8088`, VPN-only) | The web panel: status, traffic, QR issuing, direct-domain list |
+| `vpn-watchdog` (systemd) | Probe → repair → fail over → notify, every minute |
+| `vpn-drill` (systemd timer) | Monthly failover rehearsal at night; `--check` mode never breaks anything |
+| `vpn-split` | Rebuilds routing rules from `/etc/vpn-monitor/direct-domains.txt` |
+| `vpn-verify.sh`, `vpn-diag.sh` | Install verification and top-down diagnostics |
+
+Config lives in `/etc/vpn-monitor/` and `/etc/wireguard/`; state in `/var/lib/vpn-monitor/`. Nothing phones home to anyone but your own ntfy.
+
+### Privacy, stated plainly
+
+Collected: byte counters and last-handshake time per device. That's it. Not collected: domains, destination IPs, DNS queries, content. Xray access logs are disabled on both machines; the panel listens only on the VPN interface and localhost. You'll see that your mother's phone used 2 GB and you will not see what she watched — even if you wanted to, the data isn't there.
+
+---
+
+## Why REALITY and not plain WireGuard across the border
+
+Modern DPI doesn't decrypt; it classifies. Bare WireGuard has a recognizable first packet, an odd TLS fingerprint (UDP on 443), no answer when probed, and a constant symmetric UDP stream to a foreign datacenter — four tells. REALITY + XHTTP answers each one: the wire looks like TLS 1.3, uTLS mimics Chrome, a probe gets a real site with a valid certificate, and XHTTP multiplexes everything into one or two long padded HTTP/2 connections. The residual tell is the destination itself — a foreign host — which is why the relay layout exists.
+
+Why your **own** domain instead of borrowing a big-brand SNI: with a borrowed name the network owner, IP and SNI don't match, active probing sees that, and Xray's own docs warn that impersonating Apple or Microsoft gets your IP banned. With your domain on your server, the probe gets the real site, because it is the real site.
+
+More in [`references/architecture.md`](references/architecture.md) — including what was considered and rejected, and the honest risk table.
+
+---
+
+## Repository layout
+
+```
+SKILL.md                     the skill itself — how Claude runs the setup, step by step
+references/
+  human-steps.md             every manual step, with the exact words to say to a non-technical person
+  architecture.md            how it works and why; alternatives rejected; risks
+  provisioning.md            where to get machines, delivering installers, DNS
+  operations.md              daily commands, replacing a banned exit, drills
+  troubleshooting.md         top-down failure diagnosis
+scripts/
+  gen-secrets.py             keys, UUIDs, passwords → params.json (pure Python X25519)
+  build-installers.py        packs payload + params into self-contained setup-*.sh
+  provision-do.py            DigitalOcean: check, keys, create, DNS, list, destroy
+  client-link.py             vless:// link for Hiddify / v2rayNG
+  make-handout.py            plain-language handout for the end user
+  payload/                   what actually lands on the servers (see table above)
+```
+
+Internally the scripts still call themselves `vpn-kit` (`/opt/vpn-kit`, `/root/vpn-kit`) — that's the working name it shipped under; it's not being renamed on the server side to keep tested installers byte-identical.
+
+The skill's instructions are written in Russian, because that is who it was built for first. Claude follows them in whatever language you speak to it.
+
+---
+
+## Hard rules the skill follows
+
+- One server per tag at any time; never touches machines it didn't create; never deletes the old server before the new one is verified.
+- The REALITY private key exists only on the exit server. The build step strips it from the relay installer and the skill checks that it did.
+- The cover site is never a fake company, shop or review page. It's a real, boring, honest site — yours.
+- Never helps bypass card verification, never suggests registering an account in someone else's name.
+- Never starts creating servers from an unattended or scheduled session: it costs money and it's irreversible.
+
+---
+
+## Stuck? Want it done for you?
+
+The skill and this guide are free and stay free. If you get stuck, open an issue or message me on Telegram: [@{{TG_HANDLE}}](https://t.me/{{TG_HANDLE}}).
+
+If you'd rather not do it at all: one price, your server, ready in about an hour — [burrow site]({{SITE_URL}}). The server stays yours; I never hold your card or your account.
+
+## Who's behind this
+
+I'm Anton Gavrilov, a frontend engineer. I built this for my parents, then for a friend, then wrote it down so Claude could do it for anyone. Built in public: [Telegram (RU)](https://t.me/{{TG_CHANNEL}}) · [LinkedIn](https://linkedin.com/in/{{LINKEDIN}}).
+
+## License
+
+[MIT](LICENSE). Use it, fork it, sell setups with it — just keep the notice.

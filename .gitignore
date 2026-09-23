@@ -1,0 +1,19 @@
+# Never commit a live installation's secrets
+params.json
+*.params.json
+out/
+pamyatka.md
+handout.md
+*.conf
+!scripts/payload/**/*.conf
+*.pem
+*.key
+.env
+
+# OS / editor noise
+.DS_Store
+__MACOSX/
+__pycache__/
+*.pyc
+.idea/
+.vscode/
