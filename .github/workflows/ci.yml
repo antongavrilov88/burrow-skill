@@ -18,6 +18,6 @@ jobs:
         run: |
           ! grep -rnE 'dop_v1_[A-Za-z0-9]{20,}|tk_[a-z0-9]{20,}|BEGIN (RSA|OPENSSH|EC) PRIVATE' --exclude-dir=.git . || (echo "possible secret committed" && exit 1)
       - name: No placeholders on main
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || github.base_ref == 'main'
         run: |
-          ! grep -rn '{{[A-Z_]*}}' README.md SECURITY.md docs/ || (echo "fill the placeholders before main" && exit 1)
+          ! grep -rn '{{[A-Z_]*}}' README.md SECURITY.md docs/ .github/ISSUE_TEMPLATE/ || (echo "fill the placeholders before main" && exit 1)

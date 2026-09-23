@@ -17,3 +17,6 @@ __pycache__/
 *.pyc
 .idea/
 .vscode/
+
+# Private handoff notes, never published
+KICKOFF.md

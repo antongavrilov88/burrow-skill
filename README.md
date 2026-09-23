@@ -45,7 +45,7 @@ Claude picks the layout from one plain-language question ("who will use this and
 **Claude Code** (terminal):
 
 ```bash
-git clone https://github.com/{{GITHUB_REPO}} ~/.claude/skills/burrow
+git clone https://github.com/antongavrilov88/burrow ~/.claude/skills/burrow
 ```
 
 Then in any Claude Code session: *"set up my own VPN"*, *"подними мне VPN"*, or `/burrow`.
@@ -154,13 +154,13 @@ The skill's instructions are written in Russian, because that is who it was buil
 
 ## Stuck? Want it done for you?
 
-The skill and this guide are free and stay free. If you get stuck, open an issue or message me on Telegram: [@{{TG_HANDLE}}](https://t.me/{{TG_HANDLE}}).
+The skill and this guide are free and stay free. If you get stuck, open an issue or message me on Telegram: [@bepatientlikeme](https://t.me/bepatientlikeme).
 
-If you'd rather not do it at all: one price, your server, ready in about an hour — [burrow site]({{SITE_URL}}). The server stays yours; I never hold your card or your account.
+If you'd rather not do it at all: one price, your server, ready in about an hour — [burrow site](https://antongavrilov88.github.io/burrow/). The server stays yours; I never hold your card or your account.
 
 ## Who's behind this
 
-I'm Anton Gavrilov, a frontend engineer. I built this for my parents, then for a friend, then wrote it down so Claude could do it for anyone. Built in public: [Telegram (RU)](https://t.me/{{TG_CHANNEL}}) · [LinkedIn](https://linkedin.com/in/{{LINKEDIN}}).
+I'm Anton Gavrilov, a frontend engineer. I built this for my parents, then for a friend, then wrote it down so Claude could do it for anyone. Built in public: [Telegram (RU)](https://t.me/bepatientlikeme) · [LinkedIn](https://linkedin.com/in/agavrilov88).
 
 ## License
 
