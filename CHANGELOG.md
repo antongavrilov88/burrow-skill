@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix(landing): the free path now carries the visual emphasis instead of the paid one — accent border and fill, and a price line on both cards so "Free / forever" reads as a value next to "$29 / one time". The paid card is quieter, which also matches it not being live yet.
 - feat(landing): refund terms stated under the guarantee — a failed verification is a full automatic refund, anything else inside 14 days on request. The guarantee wording itself is unchanged.
 - perf(landing): first paint 2.8 s → 0.9 s (Lighthouse mobile, simulated throttling): the Google Fonts stylesheet no longer blocks render, an inline SVG favicon removes the /favicon.ico 404, `fonts.gstatic.com` is preconnected and the portrait is lazy with intrinsic size. 100/100/100/100 against a budget now recorded in `docs/UX-REVIEW.md`.
 - feat(landing): a collapsed "What actually gets installed" disclosure under How it works — cover, devices, panel, watchdog, split routing, layouts — for readers who want the stack before the README.
