@@ -4,3 +4,19 @@
 # правится через дашборд или руками, после правки: sudo python3 /usr/local/sbin/vpn-split.py
 # Поддомены включаются сами: mybank.example покрывает и app.mybank.example.
 # Если в params.json задан home_geoip, адреса домашней страны и так идут напрямую.
+
+# --- Seeded defaults -------------------------------------------------------
+# Payment and card networks that commonly refuse or step up verification when
+# the request arrives from a datacentre address. Your own bank is almost
+# certainly NOT here — add it. Subdomains are covered automatically.
+paypal.com
+stripe.com
+checkout.com
+adyen.com
+klarna.com
+wise.com
+revolut.com
+visa.com
+mastercard.com
+americanexpress.com
+3dsecure.io
