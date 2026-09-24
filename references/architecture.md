@@ -10,7 +10,7 @@ devices (WireGuard) ──► relay inside the home country ──VLESS+XHTTP+RE
 - **The first leg** is plain WireGuard, entirely inside the home country. It never
   changes: any edit means a visit to every device.
 - **The second leg** is VLESS + XHTTP + REALITY on Xray, port 443/tcp. This is the
-  leg that breaks when the screws get tightened, and it is the leg you can repair
+  leg that breaks when filtering tightens, and it is the leg you can repair
   and rebuild without anyone having to touch their devices.
 - **Who goes through the tunnel** is decided by the `proxied_src` set in nftables on
   the relay. Empty = everyone goes direct. Switching is instant, from the panel or

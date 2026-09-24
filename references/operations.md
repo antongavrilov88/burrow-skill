@@ -11,7 +11,7 @@ From outside, for the operator:
 ssh -L 8088:127.0.0.1:8088 <relay, or the exit in the single profile>   # then http://127.0.0.1:8088
 ```
 
-In the panel: who is online, how much they have pushed through, who takes which
+In the panel: who is online, how much they have used, who takes which
 route, issuing a new client with a QR code, removal, and the direct-domain list.
 
 ## Issue a device from the shell
@@ -22,10 +22,10 @@ The panel listens only inside the VPN and on localhost, so the very first device
 curl -s -X POST http://127.0.0.1:8088/api/client-new \
   -H "X-Admin-Token: $(cat /etc/vpn-monitor/admin-token)" \
   -d '{"name":"Phone","port":51821,"route":"wg"}' \
-  | python3 -c 'import json,sys,base64; r=json.load(sys.stdin); print(r.get("error") or r["ip"]); open("/root/device.png","wb").write(base64.b64decode(r["qr"])); open("/root/device.conf","w").write(r["config"])'
+  | python3 -c 'import json,sys,base64; r=json.load(sys.stdin); sys.exit(r["error"]) if "error" in r else None; png=base64.b64decode(r["qr"]); open("/root/device.conf","w").write(r["config"]); open("/root/device.png","wb").write(png) if png else None; print(r["ip"], "png" if png else "no qr (qrencode missing) — use the .conf")'
 ```
 
-`port` 443 for a phone on a strict network; `route` `reality` to put the device through the tunnel at once (relay only). Copy `/root/device.png` (the QR) or `/root/device.conf` down with `scp` and hand it over as a file; then delete both from the server. The same call is what the «+ Новый клиент» button makes.
+`port` 443 for a phone on a strict network; `route` `reality` to put the device through the tunnel at once (relay only). Copy `/root/device.png` (the QR) or `/root/device.conf` down with `scp` and hand it over as a file; then delete both from the server. Without a way to move files, `qrencode -t ansiutf8 < /root/device.conf` draws the QR in the terminal and a phone scans it from the screen. The same call is what the «+ Новый клиент» button makes.
 
 ## Everyday commands (on the relay)
 

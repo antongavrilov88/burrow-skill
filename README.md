@@ -65,7 +65,7 @@ Whichever way you run it, two things are yours to bring: **a hosting account wit
 git clone https://github.com/antongavrilov88/burrow ~/.claude/skills/burrow
 ```
 
-**Claude Code — or install it as a plugin** (updates with `/plugin update burrow`):
+**Claude Code — or install it as a plugin** (later updates: `/plugin marketplace update burrow`):
 
 ```
 /plugin marketplace add antongavrilov88/burrow

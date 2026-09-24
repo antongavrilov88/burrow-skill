@@ -1,6 +1,6 @@
 # Vultr
 
-*Last checked: 2026-09-24 (public pricing and billing pages). Tested by this skill: not yet.*
+*Written 2026-09-24 from public pricing and billing pages as known at that date, not re-verified live. Tested by this skill: not yet.*
 
 | | |
 |---|---|

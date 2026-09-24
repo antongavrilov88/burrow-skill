@@ -2,6 +2,8 @@
 
 Use one section at a time: take the section for the step you are on, retell it in your own words, wait for "done". Never paste this file, or a whole list of sections, into the chat. Section numbers match `references/human-steps.md`. Everything in quotation marks is meant to be said to the person, in their language: for a language other than English or Russian, translate from here as you go — the meaning and the warnings, not the sentences. The Russian file `ru.md` is tested with real families; use it verbatim.
 
+The click steps below are the spoken form of the DigitalOcean paths. `providers/digitalocean.md` is the canonical copy: when the provider's interface changes, update it first, then these two files.
+
 ## How to phrase things (the examples the rules refer to)
 
 - "we need a long password that lets me rent a server on your behalf" — not "generate an API token"
@@ -36,11 +38,13 @@ Notifications: "Do you want your phone to tell you if something breaks?"
 Money — one paragraph, no confirmation asked:
 
 - `single`: "Here's what it comes to: a server abroad is about six dollars a month, the domain about ten dollars a year. All in, around seven dollars a month."
-- `relay`: "Here's what it comes to: a server abroad is about six dollars a month, the domain about ten dollars a year, and a small server in the country where they live, usually four to eight dollars a month. All in, around twelve dollars a month."
+- `relay`: "Here's what it comes to: a server abroad is about six dollars a month, the domain about ten dollars a year, and a small server in the country where they live, usually four to eight dollars a month on a flat-rate plan. All in, around twelve dollars a month."
 
 ## §1 Hosting account
 
 Why, said to them: "We need a computer abroad that runs around the clock. We'll rent it from DigitalOcean — it's like web hosting, except you get the whole server. Six dollars a month."
+
+The steps, one at a time: "Open cloud.digitalocean.com/registrations/new." → "Sign up with an email and a password, or with Google." → "Confirm the email — there's a letter with a link." → "Add a payment method."
 
 The card: "About a dollar will be charged to check the card and refunded straight away."
 
@@ -51,6 +55,8 @@ Never: suggest an account in someone else's name, or a way around the card check
 ## §2 The access key
 
 "So that I can do everything for you, I need a key to your account. It's a long line of text. It gives full access, which is why we'll revoke it right after the setup — and then it's useless."
+
+The steps: "Open cloud.digitalocean.com." → "In the left menu, at the bottom: API." → "The Tokens tab, the button Generate New Token." → "Name: `vpn`, or anything." → "Expiration: 30 days." → "Scopes: Full Access." → "Generate Token." → "The line starting `dop_v1_` is shown once. Copy it whole and paste it here."
 
 Must be said aloud: "This line will pass through our conversation. When we're done, we'll revoke it and, if needed, issue a new one — so even if this chat leaked somewhere one day, the key is already dead."
 
@@ -73,6 +79,8 @@ The warning, said in full, not in passing:
 ## §4 Pointing the domain at DigitalOcean
 
 "One more thing: we need to tell them that DigitalOcean is in charge of your address. It's one setting where you bought the domain — after that I do everything myself."
+
+The steps (the same at every registrar): "Log in where you bought the domain." → "Find the domain in the list and open it." → "Find the item called Nameservers, DNS servers or NS." (Namecheap: the Domain tab, the Nameservers field; Porkbun: Authoritative Nameservers.) → "Choose Custom DNS, or 'use my own nameservers'." → "Enter three lines: `ns1.digitalocean.com`, `ns2.digitalocean.com`, `ns3.digitalocean.com`." → "Save."
 
 What to expect: "It updates in fifteen minutes to a few hours, occasionally up to a day. That's normal, nothing to re-click. I'll check myself and tell you when it's ready."
 
@@ -117,6 +125,8 @@ If pasting fails: "In Windows PowerShell paste is the right mouse button, not Ct
 ## §8 The app on the devices
 
 "We're installing the WireGuard app — it's free and official. Then you scan a picture with a code, and that's it."
+
+Where to get it: "iPhone or iPad: App Store, search WireGuard. Android: Google Play, WireGuard. Mac: App Store. Windows: wireguard.com/install, the Windows installer."
 
 Adding a device: "In the app tap +, choose 'Create from QR code', point the camera at the code the panel shows. Give it a name, save, flip the switch on."
 
@@ -192,6 +202,7 @@ Then: "I've just sent a test — did it arrive?"
 |---|---|
 | «VPN: сервер не отвечает» | the server isn't responding (urgent) |
 | «VPN: сервер снова отвечает» | the server is responding again |
+| «VPN: сервер всё ещё не отвечает» | the server is still not responding (hourly reminder) |
 | «VPN: туннель упал, все переведены на запасной путь» | the tunnel is down, everyone moved to the fallback route |
 | «VPN: туннель восстановился» | the tunnel is back, clients moved back |
 | «VPN: запасной путь не отвечает» | the fallback route isn't responding — look at it |

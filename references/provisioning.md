@@ -6,19 +6,21 @@ Technical notes for you. What to say to the person is in `lang/<xx>.md`; what th
 
 Provider is a parameter of each layer, not of the profile: any Ubuntu 24.04 host with a public IPv4 can be the exit, and any such host inside the users' country can be the relay. The files below say what is automated, how it is paid for and what to watch. Every file is dated; re-check anything older than a few months before promising it to the person.
 
-| File | Layer | Automation | Pays with | Last checked |
+| File | Layer | Automation | Pays with | Date |
 |---|---|---|---|---|
-| [`providers/digitalocean.md`](providers/digitalocean.md) | exit | **full** (`provision-do.py`) | international card, PayPal | 2026-09-24 |
-| [`providers/hetzner.md`](providers/hetzner.md) | exit | manual (console + SSH) | card, PayPal, SEPA; identity check | 2026-09-24 |
-| [`providers/vultr.md`](providers/vultr.md) | exit | manual | card, PayPal, Alipay, WeChat Pay, crypto | 2026-09-24 |
-| [`providers/yandex-cloud.md`](providers/yandex-cloud.md) | relay | manual | local cards | 2026-09-24 |
+| [`providers/digitalocean.md`](providers/digitalocean.md) | exit | **full** (`provision-do.py`) | international card, PayPal | written 2026-09-24, tested |
+| [`providers/hetzner.md`](providers/hetzner.md) | exit | manual (console + SSH) | card, PayPal, SEPA; identity check | written 2026-09-24 |
+| [`providers/vultr.md`](providers/vultr.md) | exit | manual | card, PayPal, Alipay, WeChat Pay, crypto | written 2026-09-24 |
+| [`providers/yandex-cloud.md`](providers/yandex-cloud.md) | relay | manual | local cards | written 2026-09-24 |
 | [`providers/generic-ubuntu.md`](providers/generic-ubuntu.md) | exit or relay | manual | whatever the host takes | — |
 
-**Requirements for either layer:** Ubuntu 24.04, 1 vCPU, 1 GB of memory, a real public IPv4, open `22/80/443` tcp and `443` + `51821` udp, a sensible traffic quota. That is enough for a gigabit — the bottleneck is always traffic, never the CPU. **The relay additionally wants** cheap or free inbound traffic (everything the users do passes through it twice) and, obviously, a different provider from the exit's.
+**Requirements for either layer:** Ubuntu 24.04, 1 vCPU, 1 GB of memory, a real public IPv4, a sensible traffic quota. That is enough for a gigabit — the bottleneck is always traffic, never the CPU. The installers open what each layer needs: the exit `22/80/443` tcp (plus `443` and `51821` udp in the `single` profile), the relay `22` tcp and `443` + `51821` udp — the provider's own firewall, if any, must not block those. **The relay additionally wants** cheap or free inbound traffic (everything the users do passes through it twice) and, obviously, a different provider from the exit's.
+
+**Relay-capable hosts** (inside the users' country; written 2026-09-24, not re-verified live): flat-rate VPS plans are the better fit for a household — Timeweb Cloud, Selectel, Beget, RuVDS in Russia, any local VPS elsewhere; Yandex Cloud works but bills egress per gigabyte (`providers/yandex-cloud.md`). Aeza is excluded (see below). Requirements as above plus a traffic quota of 1 TB or unlimited.
 
 ## No card that works?
 
-*Dated 2026-09-24. Not partners, no referral links, conditions change by country and by month — check the provider's own billing page before promising anything, and say to the person that you checked, not that you know.*
+*Written 2026-09-24 from the providers' public pages as known at that date, not re-verified live that day. Not partners, no referral links, conditions change by country and by month — check the provider's own billing page before promising anything, and say to the person that you checked, not that you know.*
 
 In the order worth trying:
 
@@ -48,7 +50,7 @@ ssh root@<IP> 'bash /root/setup-relay.sh'
 The install takes 5–10 minutes. If the tool cuts commands off at a timeout (many stop at 60 seconds), run it in the background and follow the log:
 
 ```bash
-ssh root@<IP> 'setsid nohup bash /root/setup-relay.sh > /var/log/vpn-kit-install.log 2>&1 & disown'
+ssh root@<IP> 'setsid nohup bash /root/setup-relay.sh > /dev/null 2>&1 & disown'   # the installer writes /var/log/vpn-kit-install.log itself
 ssh root@<IP> 'tail -20 /var/log/vpn-kit-install.log'
 ```
 
@@ -90,6 +92,6 @@ Certificates are issued by the installer automatically, but it waits for DNS —
 
 ## Running again
 
-Every installer can be run any number of times. What is already configured is left alone: an existing `wg-clients.conf` is not overwritten, issued certificates are not reissued, `admin-token` and `alerts.json` are kept. This is the normal way to finish an install that did not complete the first time.
+Every installer can be run any number of times. What is already configured is left alone: an existing `wg-clients.conf` is not overwritten, issued certificates are not reissued, `admin-token` and `alerts.json` are kept. This is the normal way to finish an install that did not complete the first time. The one exception: **the cover page `/var/www/<domain>/index.html` is regenerated from the Russian template on every run** — if it was rewritten, copy the rewritten version back afterwards (keep it at `/root/vpn-kit/index.html`).
 
 Delivered through cloud-init, the kit stays unpacked in `/opt/vpn-kit`, so a re-run does not need the file again: `bash /opt/vpn-kit/exit/install.sh 2>&1 | tee -a /var/log/vpn-kit-install.log`. Delivered by `scp`, run the same `setup-*.sh` again.

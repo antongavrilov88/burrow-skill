@@ -20,7 +20,7 @@ You are setting up a VPN that survives 2026-grade blocking, and you hand over a 
 | You have | What changes |
 |---|---|
 | A shell **and** network access to the hosting API and the servers (Claude Code on a laptop, a desktop session with a terminal) | Full automation: you create the server, set DNS, install over cloud-init or SSH, verify. The steps below assume this. |
-| A shell but **no network to the outside** (claude.ai with code execution: a sandbox that cannot reach the person's server or the hosting API) | You still generate keys and installers — the scripts are pure Python. The person does the clicking: creates the server in the provider's console with `out/setup-exit.sh` pasted into the "user data" field, runs the two SSH lines for everything else, and reads command output back to you. **Say this at the very start, once**, so nobody waits for a connection you cannot make. `provision-do.py` is useless here; the console click paths are in `references/providers/`. DNS checks: ask them to open dnschecker.org. |
+| A shell but **no network to the outside** (claude.ai with code execution: a sandbox that cannot reach the person's server or the hosting API) | You still generate keys and installers — the scripts are pure Python. The person does the clicking: creates the server in the provider's console with `out/setup-exit.sh` pasted into the "user data" field, runs the two SSH lines for everything else, and reads command output back to you. **Say this at the very start, once**, so nobody waits for a connection you cannot make. `provision-do.py` is useless here; the console click paths are in `references/providers/`. The person needs their own SSH access to the machine (their own key at creation, or the provider's root-password reset); the first device then comes from the panel through their own port-forward or from a QR printed in their terminal (step 7). DNS checks: ask them to open dnschecker.org. |
 | No shell at all | Stop. Keys cannot be generated in a chat. Point them to Claude Code or to the hosted agent (link in the README). |
 
 ## The person is not technical
@@ -64,11 +64,11 @@ Do not ask about "topology" or "relay" by name, and do not turn the one question
 In the same message ask, in their words (wording: `lang/<xx>.md` §0):
 
 - **"Do you have your own address on the internet — a domain?"** Yes and they control it / no / no idea what that is. For "no": one sentence on what it is, what it costs and why it is needed (it is the disguise: from outside, someone just visits some website).
-- **"Do you have an account with DigitalOcean or another hosting provider?"** DigitalOcean is the automated path. Another provider works too, with more clicking on their side. No account at all: **warn right now** that it needs a payment method the provider accepts — a card that works internationally, or PayPal. This is where most setups stall, and it is better known now than an hour in.
+- **"Do you have an account with DigitalOcean or another hosting provider?"** DigitalOcean is the automated path. Another provider works too, with more clicking on their side. No account at all: **warn right now** that it needs a payment method the provider accepts — a card that works internationally, or PayPal. This is where most setups stall, and it is better to find out now than an hour in.
 - **"Do you want your phone to tell you when something breaks?"** Yes / no.
 - **[relay]** one more, after the answer that picked the profile: **"Can a small server be rented in the country where they live — by you, or by someone there with a local card?"** If not, the relay is impossible; fall back to `single` and say why in one sentence.
 
-**Right after the answers, name the money** — one paragraph, no request for confirmation (`lang/<xx>.md` §0, per profile): about $6 a month for the server abroad, about $10 a year for the domain, **[relay]** plus a small domestic server, typically $4–8 a month.
+**Right after the answers, state the cost** — one paragraph, no request for confirmation (`lang/<xx>.md` §0, per profile): about $6 a month for the server abroad, about $10 a year for the domain, **[relay]** plus a small domestic server, typically $4–8 a month on a flat-rate plan (metered clouds can cost more for a household that watches video).
 
 If the session runs on a schedule and there is nobody to ask — **do not start**. Creating servers costs money and cannot be undone.
 
@@ -87,7 +87,7 @@ The script answers in Russian: `статус: active` is what you want; `акк�
 
 **Say out loud, once and not in passing:** the key passes through this conversation, so at the end you will revoke it together. Remind them again when you say goodbye.
 
-With a provider other than DigitalOcean there is no key: the person creates the machine themselves by the provider file, and you get SSH access instead (§7 has the words). Everything else is the same.
+With a provider other than DigitalOcean there is no key: the person creates the machine themselves following the provider file, and you get SSH access instead (§7 has the words). §4 applies only when the domain's DNS will live at DigitalOcean; with another provider the records are set at the registrar (§5) or in that provider's DNS. Everything else is the same.
 
 ### 2. Keys and SSH
 
@@ -131,7 +131,7 @@ python3 scripts/provision-do.py dns-check --domain <domain> --ip <IP>
 
 The install runs by itself from cloud-init, 5–10 minutes. Tell the person how long, and use the pause: explain what comes next, or do §8 (the app on the phone) ahead of time.
 
-Mind this: the installer sits in the machine's metadata, readable by any local process. For the exit that is harmless — its secrets live there anyway. **Never deliver the relay installer through cloud-init or metadata.**
+Note: the installer sits in the machine's metadata, readable by any local process. For the exit that is harmless — its secrets live there anyway. **Never deliver the relay installer through cloud-init or metadata.**
 
 Write the address into `params.json` as `exit_ip`.
 
@@ -146,16 +146,16 @@ curl -sI https://<domain> | head -3    # from outside: 200 and a real certificat
 
 Do not continue until both agree. `curl` refuses a bad certificate, so `HTTP/2 200` there already proves the certificate is real. No certificate almost always means DNS — `references/troubleshooting.md`.
 
-**Take the alert token** from `/root/vpn-kit/exit-summary.txt` (the line `ntfy alerts-токен tk_…`) and write it into `params.json` as `ntfy_alert_token` — otherwise the watchdog will only reach the public fallback topic.
+**Take the alert token** from `/root/vpn-kit/exit-summary.txt` (the line `ntfy alerts-токен tk_…`) and write it into `params.json` as `ntfy_alert_token`. The exit's own watchdog already has it from this run; the relay build and any later rebuild take it from `params.json`, and without it they only reach the public fallback topic.
 
 **The cover site.** The template that landed in `/var/www/<domain>/` is a page of self-hosting notes, in Russian. Two things to do now, not "some day":
 
-- If the person does not write in Russian, rewrite the page in their language before you hand anything over — three honest paragraphs about anything of theirs (a hobby, notes, a photo archive). A Russian page on a server on another continent for a non-Russian user is a mismatch a reviewer notices. How: over SSH, replace `/var/www/<domain>/index.html` with a plain static page in the same shape (title, a few dated notes, `<html lang="xx">` for their language; the Russian original in `scripts/payload/site/index.html` shows the structure), then `curl -s https://<domain> | grep -c <a word from the new text>`.
+- If the person does not write in Russian, rewrite the page in their language before you hand anything over — three honest paragraphs about anything of theirs (a hobby, notes, a photo archive). A Russian page on a server on another continent for a non-Russian user is a mismatch a reviewer notices. How: over SSH, replace `/var/www/<domain>/index.html` with a plain static page in the same shape (title, a few dated notes, `<html lang="xx">` for their language; the Russian original in `scripts/payload/site/index.html` shows the structure), keep a copy at `/root/vpn-kit/index.html`, then `curl -s https://<domain> | grep -c <a word from the new text>`. **Every run of the installer regenerates that page from the Russian template**, so do the rewrite after the last installer run, and after any later re-run copy your version back and check again.
 - Say to them, in their words (`lang/<xx>.md`, "Between the steps"): the page exists so that a check sees an ordinary website; the same template on a dozen addresses becomes a fingerprint, so the text should become their own. Offer to write it with them — thirty seconds of work that measurably improves the disguise.
 
 ### 5. [relay] The relay, in the users' country
 
-The skill does not create this machine: domestic providers have no common API. Walk the person through §6 (`references/providers/yandex-cloud.md`, `generic-ubuntu.md`), then rebuild:
+The skill does not create this machine: domestic providers have no common API. Walk the person through §6 (`references/providers/yandex-cloud.md`, `generic-ubuntu.md`; the dated list of relay-capable hosts is in `references/provisioning.md` — prefer a flat-rate VPS over a metered cloud), then rebuild:
 
 ```bash
 python3 scripts/build-installers.py --params params.json --out ./out
@@ -189,6 +189,8 @@ Add devices **with the person, in the panel** — not for them. They have to wal
 
 **The first device is the exception, in both profiles:** the panel is reachable only from inside the VPN, and nothing is inside it yet. Issue that one device yourself, from the server's shell (`references/operations.md`, "Issue a device from the shell"): it returns the config and a QR image — send the QR as a file, the person scans it from the screen. Say two things with it: that this one code passed through the chat and they can replace it from the panel later if they want, and the privacy sentence (`lang/<xx>.md`), because this is the first time the panel comes up.
 
+Guidance-only mode (no shell to the server from where you run): the person runs that one-liner themselves over SSH, then `qrencode -t ansiutf8 < /root/device.conf` prints the QR in their terminal and the phone scans it from the screen; or they open the panel through their own port-forward, `ssh -L 8088:127.0.0.1:8088 root@<IP>` and `http://127.0.0.1:8088` in their browser, and create the device there like any later one.
+
 From the second device on, by §8: the person opens the panel from the device that is already connected → «+ Новый клиент» ("New client") → the new device scans the QR. Wait for "it works" before counting the step done. Ask directly: "Open youtube.com — does it open?" People who are not in the room get a screenshot of the QR or the `.conf` file over a messenger the person trusts — say that the file is a key and the message should be deleted once scanned.
 
 **[relay]** The order matters here:
@@ -212,7 +214,7 @@ python3 scripts/make-handout.py --params params.json --out pamyatka.md     # Rus
 
 Any other language: render `references/lang/handout-<xx>.md` from `params.json` into `handout.md` (the English template exists; the rules are at the top of the file). Same content, same sections, same variables as the script.
 
-Send it as a file (SendUserFile, or whatever file hand-over your environment has). **Never publish it as a page**: it contains the panel code and the alert password. The Russian text prices the domain in roubles and, in `relay`, calls the relay "the server in Russia" — the script's tested wording; if that is wrong for this family, say so in one sentence or correct that one line in the generated file, not in the script.
+Send it as a file (SendUserFile, or whatever file hand-over your environment has). **Never publish it as a page**: it contains the panel code and the alert password. The Russian text prices the domain in roubles, in `relay` calls the relay "the server in Russia", and in `single` still mentions the monthly self-test that only the relay has — the script's tested wording; if a line is wrong for this family, say so in one sentence or correct that line in the generated file, not in the script.
 
 ### 9. Say goodbye
 
@@ -253,6 +255,7 @@ Both profiles end at the same scripts. What differs:
 4. **The WireGuard port on the relay must not change** once people are connected: any change means a visit to every device.
 5. **The REALITY private key lives only on the exit.** It goes into no chat, no project, no relay installer — the build step strips it out together with the operator's spare entrance. Verify:
    `bash -c 'S=$(grep -n "^base64 -d" out/setup-relay.sh|cut -d: -f1); E=$(grep -n "^__VPNKIT_PAYLOAD__$" out/setup-relay.sh|cut -d: -f1); sed -n "$((S+1)),$((E-1))p" out/setup-relay.sh|base64 -d|tar xzO vars.sh|grep REALITY_PRIVATE'`
+   The expected output is exactly `REALITY_PRIVATE=''` — an empty value. Anything after the `=` means the build is wrong; stop.
 6. **The cover site never impersonates someone else's company, shop or review site.** The cover must be real and the person's own. The template in `scripts/payload/site/` is a stub to be rewritten, not something to pass off as somebody's business.
 7. **Never help bypass card verification** and never suggest opening an account in someone else's name. If there is nothing to pay with, offer another provider (`references/provisioning.md`, "No card that works?").
 

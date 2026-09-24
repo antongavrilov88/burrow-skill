@@ -29,6 +29,11 @@ jobs:
           assert plugin["name"] == "burrow" and market["plugins"][0]["name"] == "burrow"
           assert market["plugins"][0]["source"] == "./"
           assert market["plugins"][0].get("version") == plugin["version"], "version differs between plugin.json and marketplace.json"
+          latest = re.search(r"^## (\d+\.\d+\.\d+)", open("CHANGELOG.md", encoding="utf-8").read(), re.M).group(1)
+          assert latest == plugin["version"], f"plugin version {plugin['version']} != latest CHANGELOG entry {latest}"
+          import os
+          for m in re.findall(r"\]\((providers/[a-z0-9-]+\.md)\)", open("references/provisioning.md", encoding="utf-8").read()):
+              assert os.path.exists("references/" + m), f"provisioning.md links to missing {m}"
           PY
       - name: No secrets in the tree
         run: |

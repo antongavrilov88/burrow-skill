@@ -14,7 +14,7 @@ Everything else the skill does itself. This file covers only what technically ca
 
 **What happens:** they register with the provider, confirm the email, attach a payment method. Click path and the ~$1 verification hold: `providers/digitalocean.md` (or the file of the provider they chose).
 
-**Where it stalls:** the payment method. Providers refuse cards from some countries; which ones is in the provider file, not in what you say. What usually works: a card from a bank in another country, PayPal on an account outside the country, a virtual card (Wise, Payoneer).
+**Where it stalls:** the payment method. Providers refuse cards from some countries; the country list stays in the provider file — do not recite it. What usually works: a card from a bank in another country, PayPal on an account outside the country, a virtual card (Wise, Payoneer).
 
 **No card that works at all:** say so plainly and pick a provider from "No card that works?" in `provisioning.md`. Then the person creates the machine themselves (Ubuntu 24.04) and gives you access; everything else is the same, minus the automatic creation.
 
@@ -88,7 +88,7 @@ Everything else the skill does itself. This file covers only what technically ca
 
 **Why:** their home ISP sees a dull connection to a domestic address instead of a round-the-clock link abroad; and a domestic address is the one that has a chance on an allow-list-only network.
 
-**What happens:** they order the cheapest Ubuntu 24.04 VPS with a dedicated IPv4 at a provider in that country — `providers/yandex-cloud.md`, `providers/generic-ubuntu.md`. Check the traffic quota (everything passes twice) and that it is a different provider from the exit's.
+**What happens:** they order the cheapest Ubuntu 24.04 VPS with a dedicated IPv4 at a provider in that country — `providers/yandex-cloud.md`, `providers/generic-ubuntu.md`, and the dated relay-capable list in `provisioning.md`; a flat-rate VPS beats a metered cloud for a household. Check the traffic quota (everything passes twice) and that it is a different provider from the exit's.
 
 **What you need from them:** the address, the login (root, or a user with passwordless sudo) and the password or key — providers email these right after payment.
 
@@ -119,7 +119,7 @@ ssh root@ADDRESS 'bash /root/setup-relay.sh'
 
 **What happens:** the official WireGuard app — App Store / Google Play / Mac App Store / `wireguard.com/install` for Windows. In the app: **+** → **Create from QR code** → scan the code the panel shows → name → save → switch on. On a computer: download the `.conf` from the panel → **Import tunnel(s) from file**. The phone asks once whether to allow the VPN configuration: yes.
 
-**The first device** cannot come from the panel — the panel is reachable only from inside the VPN. You issue it from the server's shell (`operations.md`, "Issue a device from the shell") and send the QR image as a file; the person scans it from the screen. Every later device: the person, in the panel, from a device that is already connected. People who are not in the room get a screenshot of the QR or the `.conf` over a messenger; the message is deleted once scanned.
+**The first device** cannot come from the panel — the panel is reachable only from inside the VPN. You issue it from the server's shell (`operations.md`, "Issue a device from the shell") and send the QR image as a file; the person scans it from the screen. When you have no shell to the server, the person runs that call themselves and `qrencode -t ansiutf8 < /root/device.conf` shows the QR in their terminal, or they reach the panel through `ssh -L 8088:127.0.0.1:8088 root@<IP>` and `http://127.0.0.1:8088`. Every later device: the person, in the panel, from a device that is already connected. People who are not in the room get a screenshot of the QR or the `.conf` over a messenger; the message is deleted once scanned.
 
 **The panel:** opened from a device that is already on the VPN, at `http://<wg_subnet>.1:<dashboard_port>` (default `http://10.67.0.1:8088`); the admin code is asked once per browser. **Its labels are Russian** — the glossary is in `lang/<xx>.md`; for a person who does not read Russian, say so once before this step.
 

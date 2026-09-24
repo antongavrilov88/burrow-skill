@@ -143,6 +143,7 @@ The keys and passwords are in a separate file, `params.json`. **It must not be l
 |---|---|
 | «VPN: сервер не отвечает» | the server isn't responding |
 | «VPN: сервер снова отвечает» | the server is responding again |
+| «VPN: сервер всё ещё не отвечает» | the server is still not responding |
 <!-- relay only: the rows below -->
 | «VPN: туннель упал, все переведены на запасной путь» | the tunnel is down, everyone moved to the fallback route |
 | «VPN: туннель восстановился» | the tunnel is back |

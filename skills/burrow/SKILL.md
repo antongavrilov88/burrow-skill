@@ -8,6 +8,6 @@ description: 'Use when someone wants a personal VPN on a server they rent themse
 This file exists only so that the plugin loader finds the skill. **The complete skill is the `SKILL.md` at the plugin root, one level above `skills/`.** Read it in full right now and follow it; every path it names (`scripts/…`, `references/…`) is relative to that root.
 
 - Root of this plugin: `${CLAUDE_PLUGIN_ROOT}` — so the skill is `${CLAUDE_PLUGIN_ROOT}/SKILL.md` and the scripts are under `${CLAUDE_PLUGIN_ROOT}/scripts/`.
-- If the placeholder above was not replaced with a real path (you are not running as a plugin), the root is two directories up from this file.
+- If the placeholder above was not replaced with a real path (you are not running as a plugin), the root is the directory that contains `skills/`: `../../SKILL.md` relative to this file.
 
 Do not answer the person from this stub. Load the root `SKILL.md` first.

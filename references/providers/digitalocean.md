@@ -1,13 +1,13 @@
 # DigitalOcean
 
-*Last checked: 2026-09-24. Tested by this skill: yes — this is the automated path.*
+*Written 2026-09-24 from the console and billing pages as known at that date, not re-verified live. Tested by this skill: yes — this is the automated path.*
 
 | | |
 |---|---|
 | **Layer** | **exit**, in either profile. Not a relay: no datacenters inside filtered countries. |
 | **Automation** | **Full.** `scripts/provision-do.py` creates the machine, uploads the SSH key, sets the DNS records, lists and destroys by tag. Needs an API token (full access, 30-day expiry) in `DO_TOKEN`. |
 | **Machine** | `s-1vcpu-1gb`: $6/month, 1 TB transfer, Ubuntu 24.04 (`ubuntu-24-04-x64`). Regions: `fra1` `ams3` `lon1` (Europe), `sgp1` (Asia), `blr1` (India), `nyc1` `nyc3` `sfo3` `tor1` (Americas), `syd1` (Australia). |
-| **Payment** | International Visa / Mastercard / American Express, PayPal, Google Pay in some countries. About $1 is held to verify the card and refunded. Cards issued in Russia and Belarus are not accepted (since 2022). Virtual cards from Wise, Payoneer or Revolut generally work; anonymous prepaid cards usually do not. New accounts are sometimes asked to prepay a small balance before the first droplet. |
+| **Payment** | International Visa / Mastercard / American Express, PayPal. About $1 is held to verify the card and refunded. Cards issued in Russia and Belarus are not accepted (since 2022). Virtual cards from Wise, Payoneer or Revolut generally work; anonymous prepaid cards usually do not. New accounts are sometimes asked to prepay a small balance before the first droplet. |
 | **Known blocked ranges** | DigitalOcean's address space has been blocked in bulk inside Russia repeatedly since 2022 — whole /16s at a time, on and off — and large parts of it are unreachable from China and Iran. A fresh droplet's IP can already be on a list. In the `relay` profile this hits the relay → exit hop: before handing over, check from the relay that `curl -x socks5h://127.0.0.1:1080 https://api.ipify.org` returns the exit's IP; if the region is dead, destroy and recreate in another region (fifteen minutes, nobody reconfigures a phone). In `single` it hits the users directly and the remedy is the same: a new machine plus DNS. |
 | **Quirks** | `ssh_keys` is mandatory at creation: without it the droplet boots in "change your password on first login" mode and refuses key logins — the script refuses to create such a machine. `user_data` is limited to 64 KB (the exit installer is about 49 KB). The `vpn-exit` tag is how `list` and `destroy` find the machine; `destroy` refuses without it. Metadata (`user_data`) is readable by any local process: fine for the exit, never for the relay installer. |
 
@@ -20,7 +20,7 @@ Revoke: the same page → **Tokens** → the three dots next to the token → **
 
 **Nameservers (§4)** — at the registrar, custom nameservers: `ns1.digitalocean.com`, `ns2.digitalocean.com`, `ns3.digitalocean.com`.
 
-**Console fallback** (you have no network from where you run, or the API refuses): **Create → Droplets** → region → image **Ubuntu 24.04 (LTS) x64** → **Basic** → CPU options **Regular**, the **$6** plan → Authentication: **SSH Key** (add the public key you generated, or theirs) → **Advanced Options → Add Initialization scripts (free)** → paste the whole `out/setup-exit.sh` → Tags: `vpn-exit` → **Create Droplet**. DNS in the console: **Networking → Domains** → add the domain → three **A** records `@`, `www`, `push` → the droplet's IP, TTL 300.
+**Console fallback** (you have no network from where you run, or the API refuses): **Create → Droplets** → region → image **Ubuntu 24.04 (LTS) x64** → **Basic** → CPU options **Regular**, the **$6** plan → Authentication: **SSH Key** (the person's own key — in guidance-only mode they need SSH access themselves; with no key at all, **Password** works too, or later **Access → Reset root password** on the droplet page emails one) → **Advanced Options → Add Initialization scripts (free)** → paste the whole `out/setup-exit.sh` → Tags: `vpn-exit` → **Create Droplet**. DNS in the console: **Networking → Domains** → add the domain → three **A** records `@`, `www`, `push` → the droplet's IP, TTL 300.
 
 ## Commands
 
