@@ -16,6 +16,37 @@
 
 - docs(skill): global positioning — every country-specific term removed from the public surface (skill, references, README, landing strings, script comments and printed strings); the `relay` profile is described only as "your network restricts direct foreign connections or only allows listed IP ranges", with a home-country relay at any Ubuntu 24.04 provider. `references/providers/` gets Alibaba Cloud and ArvanCloud, and every provider file the same rows: signup requirements, machine/region/image, firewall, quirks, last-verified date; a neutral warning about home-country providers at the top of the relay section. Default split-tunnel list (`direct-domains.txt`) ships empty — fill it per household from the panel (`home_geoip` still routes home-country addresses directly). `CONTRIBUTING.md` "Wording rules" + `.github/wording-guard.sh` in CI. Printed strings in `make-handout.py` and the panel hint changed accordingly; no script logic changed.
 
+- `fix(installer)` — **iPhones get push notifications again.** `/etc/ntfy/server.yml` now
+  carries `upstream-base-url: "https://ntfy.sh"`: iOS keeps no background connection to a
+  self-hosted ntfy, so only ntfy.sh can wake the phone. Just the bare fact that a message
+  exists goes upstream — no text, no topic; the phone fetches the text from your own
+  server. A server built before this release needs the line added by hand plus
+  `systemctl restart ntfy`, and the subscription in the app deleted and re-created —
+  otherwise the phone never re-registers (`references/troubleshooting.md`).
+- `fix(installer)` — **a drill no longer takes the operator down with it.**
+  `vpn-drill.sh` postpones itself while people are using the channel (more than 5 MB in
+  the last five minutes, from `stats.db`, or a WireGuard handshake in the last 180 s when
+  that database is missing): it notifies, logs `skip: clients active` and exits 3 without
+  touching the route. A plain run now detaches into the transient unit
+  `vpn-drill-manual` and returns at once, so an SSH session dying with the channel can no
+  longer kill the run and leave the block standing. New flags `--force` (run anyway) and
+  `--fg` (run in this process); unknown flags exit 2; running under systemd implies
+  `--fg`, so `vpn-drill.service` and `vpn-drill-check.service` are unchanged, and
+  `--check` still exits before any of this and breaks nothing.
+- `docs(skill)` — the first device is now checked **on mobile data, Wi-Fi off**, before
+  any QR codes go out; if Wi-Fi works and mobile data does not, `alt_port` 443 first and
+  only then a different provider in the users' country — the relay's IP is written into
+  every config the panel issues, so moving the relay afterwards means re-issuing every
+  device (`SKILL.md` step 7, `lang/en.md`, `lang/ru.md`, `references/human-steps.md`).
+- `docs(skill)` — `references/architecture.md` gains "A standby exit instead of the direct
+  fallback": why the direct fallback is weakest on carrier-restricted networks, the shape
+  of an exit B, the files it would touch, and why it is not built until paying users
+  confirm the direct fallback is useless for them.
+- Because the first two change what the installers put on a server, this is **at least a
+  minor bump** at release time (CONTRIBUTING, "Versioning"). The versions in
+  `.claude-plugin/plugin.json` and `marketplace.json` are bumped by the release step, not
+  here.
+
 ## 0.2.0 — 2026-09-24
 
 - Skill rewritten in English. One routing question ("where are the people, and does their network restrict direct foreign connections?") selects a profile: `single` (one server abroad, default) or `relay` (relay in the users' country + exit). Both end at the same installers; `SKILL.md` has the parameter table.

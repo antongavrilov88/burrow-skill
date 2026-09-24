@@ -92,6 +92,8 @@ Everything else the skill does itself. This file covers only what technically ca
 
 **What you need from them:** the address, the login (root, or a user with passwordless sudo) and the password or key — providers email these right after payment.
 
+**If you have to move it, move it before the QR codes go out.** The relay's address is written into every device config, so a relay that turns out not to be reachable on the users' mobile networks has to be replaced *before* anyone has scanned a code — afterwards it means re-issuing every device. That is exactly what the mobile-data test on the first device is for (step 7; `lang/<xx>.md` §8): first `alt_port` 443, and only then a different provider in the same country.
+
 **Say it straight** (`lang/<xx>.md` §6): the password passes through the chat; after the install you show them how to change it (`passwd`, one command).
 
 **You verify:** `ssh` in; `lsb_release -a` says 24.04; `curl -4 https://api.ipify.org` prints the address they gave you.
