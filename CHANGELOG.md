@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feat(landing): English-only, global positioning. RU dictionary, `#ru` deep link and browser auto-detect removed; the dropdown architecture stays and hides itself while there is one language. Copy sweep: no region-specific wording anywhere (meta, OG, hero, why, agent tier, card section, bio); benefits lead with split tunneling, then privacy, then speed; "no foreign card?" became "card declined?"; bio is "developer, builds this in public".
+
 - docs(skill): global positioning — every country-specific term removed from the public surface (skill, references, README, landing strings, script comments and printed strings); the `relay` profile is described only as "your network restricts direct foreign connections or only allows listed IP ranges", with a home-country relay at any Ubuntu 24.04 provider. `references/providers/` gets Alibaba Cloud and ArvanCloud, and every provider file the same rows: signup requirements, machine/region/image, firewall, quirks, last-verified date; a neutral warning about home-country providers at the top of the relay section. Default split-tunnel list (`direct-domains.txt`) ships empty — fill it per household from the panel (`home_geoip` still routes home-country addresses directly). `CONTRIBUTING.md` "Wording rules" + `.github/wording-guard.sh` in CI. Printed strings in `make-handout.py` and the panel hint changed accordingly; no script logic changed.
 
 ## 0.2.0 — 2026-09-24
