@@ -125,11 +125,27 @@ three ways (through the tunnel, directly, and via the WireGuard interface) — i
 none of them got through, check the ntfy token and that `https://push.<domain>` opens at all.
 The public topic on `ntfy.sh` is the backup channel; it must always work.
 
+**The message is in the app, but the phone never woke up (iPhone).** iOS keeps no
+background connection to a self-hosted ntfy, so the phone only sees the alert once
+you open the app by hand. The server has to hand the wake-up to `ntfy.sh`:
+`/etc/ntfy/server.yml` needs `upstream-base-url: "https://ntfy.sh"` (only the bare
+fact that a message exists travels there — no text, no topic; the phone then fetches
+the text from your server). Installers since this release write that line themselves;
+on a server built earlier, add it by hand and `systemctl restart ntfy`. Then **delete
+the subscription in the app and add it again** — without that the phone never
+re-registers for the upstream wake-up and nothing changes.
+
 ## Pitfalls we have already fallen into
 
 - **SSH to the relay may itself go through the tunnel.** If the tunnel is down, you
   have no control until you turn off the VPN on your own machine. The relay's
   address is in the `bypass` set, but verify that before you need it.
+- **A drill cuts the channel you are sitting on.** `vpn-drill.sh` breaks the relay's
+  route out on purpose, so an SSH session running through this VPN dies with it — and
+  a foreground script dies with the session, leaving the block in place until the
+  safety timer lifts it. That is why a plain run now detaches into its own systemd
+  unit and returns at once, and why it postpones itself while clients are pushing
+  traffic (`--force` overrides, `--check` never breaks anything).
 - **`pkill -f <pattern>` kills your own session** if the pattern appears in its
   command line.
 - **`xray run -test` requires the `.json` extension** on the config file.
