@@ -1,147 +1,162 @@
-# Эксплуатация
+# Operations
 
-## Панель
+## The panel
 
-`http://<подсеть>.1:8088` — только изнутри VPN (по умолчанию `http://10.67.0.1:8088`).
-Код доступа лежит в `/etc/vpn-monitor/admin-token`, браузер запоминает его сам.
+`http://<subnet>.1:8088` — only from inside the VPN (by default `http://10.67.0.1:8088`).
+The access code is in `/etc/vpn-monitor/admin-token`; the browser remembers it on its own.
 
-Снаружи, для того кто держит систему:
+From outside, for the operator:
 
 ```bash
-ssh -L 8088:127.0.0.1:8088 <релей>   # затем http://127.0.0.1:8088
+ssh -L 8088:127.0.0.1:8088 <relay, or the exit in the single profile>   # then http://127.0.0.1:8088
 ```
 
-В панели: кто онлайн, сколько прокачал, кто каким маршрутом идёт, выпуск нового
-клиента с QR, удаление, список доменов-исключений.
+In the panel: who is online, how much they have used, who takes which
+route, issuing a new client with a QR code, removal, and the direct-domain list.
 
-## Ежедневные команды (на релее)
+## Issue a device from the shell
+
+The panel listens only inside the VPN and on localhost, so the very first device — or any device while the panel is unreachable — is issued through the panel's own API, on the machine that runs it (the relay, or the exit in the `single` profile):
 
 ```bash
-# кто сейчас в туннеле
+curl -s -X POST http://127.0.0.1:8088/api/client-new \
+  -H "X-Admin-Token: $(cat /etc/vpn-monitor/admin-token)" \
+  -d '{"name":"Phone","port":51821,"route":"wg"}' \
+  | python3 -c 'import json,sys,base64; r=json.load(sys.stdin); sys.exit(r["error"]) if "error" in r else None; png=base64.b64decode(r["qr"]); open("/root/device.conf","w").write(r["config"]); open("/root/device.png","wb").write(png) if png else None; print(r["ip"], "png" if png else "no qr (qrencode missing) — use the .conf")'
+```
+
+`port` 443 for a phone on a strict network; `route` `reality` to put the device through the tunnel at once (relay only). Copy `/root/device.png` (the QR) or `/root/device.conf` down with `scp` and hand it over as a file; then delete both from the server. Without a way to move files, `qrencode -t ansiutf8 < /root/device.conf` draws the QR in the terminal and a phone scans it from the screen. The same call is what the «+ Новый клиент» button makes.
+
+## Everyday commands (on the relay)
+
+```bash
+# who is in the tunnel right now
 sudo nft list set ip xray_tproxy proxied_src
 
-# переключить одного клиента, мгновенно
+# switch one client, instantly
 sudo nft add element ip xray_tproxy proxied_src { 10.67.0.6 }
 sudo nft delete element ip xray_tproxy proxied_src { 10.67.0.6 }
 
-# всех разом в туннель
+# everyone into the tunnel at once
 sudo nft add element ip xray_tproxy proxied_src { 10.67.0.0/24 }
 
-# полный откат на прямой выход
+# full failover to the direct route
 sudo systemctl stop xray-tproxy-route
 
-# состояние
-curl -x socks5h://127.0.0.1:1080 https://api.ipify.org    # должен быть IP выхода
+# state
+curl -x socks5h://127.0.0.1:1080 https://api.ipify.org    # must be the exit's IP
 sudo cat /var/lib/vpn-monitor/health.json
-sudo bash /usr/local/sbin/vpn-verify.sh                   # полная проверка
+sudo bash /usr/local/sbin/vpn-verify.sh                   # full check
 
-# домены-исключения (прямой выход с релея)
+# direct domains (leave straight from the relay)
 sudo nano /etc/vpn-monitor/direct-domains.txt
 sudo python3 /usr/local/sbin/vpn-split.py
 
-# снимок состояния для разбора
+# state snapshot for diagnosis
 sudo /usr/local/sbin/vpn-diag.sh
 
-# уведомление вручную (проверить, что канал алертов живой)
+# send a notification by hand (is the alert channel alive?)
 sudo python3 -c "import importlib.util;s=importlib.util.spec_from_file_location('w','/usr/local/sbin/vpn-watchdog.py');m=importlib.util.module_from_spec(s);s.loader.exec_module(m);print(m.notify('Тест','Проверка'))"
 ```
 
-Переключение из панели само дописывает набор в `/etc/xray/xray-tproxy.nft`,
-чтобы он пережил перезагрузку. Если правишь `nft` руками — впиши `elements`
-в файл сам, иначе после ребута всё вернётся.
+Switching from the panel also writes the set into `/etc/xray/xray-tproxy.nft` so
+it survives a reboot. If you edit `nft` by hand, put the `elements` into that file
+yourself, otherwise everything reverts after a reboot.
 
-## Как работает сторож
+## How the watchdog works
 
-| Состояние | Период проб | Что происходит |
+| State | Probe interval | What happens |
 |---|---|---|
-| здоров | 30 с | проба через socks: gstatic, затем cloudflare |
-| первая неудача | 5 с | режим быстрого подтверждения |
-| 3 неудачи подряд (~45–60 с от поломки) | — | **сначала откат**: состав `proxied_src` сохраняется и очищается, клиенты уходят на прямой выход, летит уведомление; **потом починка**: перезапуск Xray |
-| лежит | 20 с | перезапуск Xray раз в ~5 минут, напоминание раз в час |
-| 5 успешных проб | — | возврат клиентов из сохранённого списка + уведомление |
-| флап-защита | — | если за час было 3+ отката, для возврата нужно 20 успешных проб вместо 5 |
-| фон, раз в 10 мин | — | отдельная проверка запасного пути; мёртвый резерв = свой алерт |
+| healthy | 30 s | probe through socks: gstatic, then cloudflare |
+| first failure | 5 s | fast-confirmation mode |
+| 3 failures in a row (~45–60 s after the break) | — | **failover first**: the contents of `proxied_src` are saved and cleared, clients move to the direct route, a notification goes out; **repair second**: Xray is restarted |
+| down | 20 s | Xray restart about every 5 minutes, a reminder once an hour |
+| 5 successful probes | — | clients restored from the saved list + notification |
+| flap protection | — | if there were 3+ failovers within an hour, restore needs 20 successful probes instead of 5 |
+| background, every 10 min | — | a separate check of the fallback route; a dead fallback = its own alert |
 
-Порядок «сначала пересадить, потом чинить» выбран нарочно: перезапуск Xray сам
-по себе рвёт соединения, и делать его до отката значит ломать людям связь дважды.
+The order — move people first, repair second — is deliberate: an Xray restart drops
+connections by itself, and doing it before the failover means breaking people's
+connectivity twice.
 
-В схеме B (одна машина) сторож работает в урезанном режиме: пробует канал,
-перезапускает Xray, шлёт уведомление. Пересаживать некуда.
+In the `single` profile (one machine) the watchdog runs in a reduced mode: it probes
+the channel, restarts Xray and sends a notification. There is nowhere to move
+people to.
 
-## Учения
-
-```bash
-sudo /usr/local/sbin/vpn-drill.sh --check   # только проверка готовности, ничего не ломает
-sudo /usr/local/sbin/vpn-drill.sh           # настоящее падение на ~2 минуты
-```
-
-Полный прогон: проверка готовности → блокировка пути до выхода → ожидание
-отката → снятие блокировки → ожидание возврата → сверка состава клиентов
-до и после → отчёт в уведомления. Страховка через `systemd-run --on-active=10min`
-снимает блокировку, даже если скрипт умрёт.
-
-Запускается сам первого числа ночью; проверка готовности — каждый понедельник.
-Лог: `/var/lib/vpn-monitor/drill.log`.
-
-Учения — единственный способ узнать, что автооткат работает. Настроенный,
-но ни разу не проверенный откат — это не откат.
-
-## Замена выходной машины после бана IP (~15 минут)
-
-Порядок строгий.
-
-1. `provision-do.py list --tag vpn-exit` — запомнить id и IP старой. Если машин
-   больше одной, сначала навести порядок.
-2. Создать новую **с `--ssh-key`** и тем же `out/setup-exit.sh`.
-3. Переставить A-записи `@`, `www`, `push` на новый IP, дождаться сертификатов
-   (следить в `/var/log/vpn-kit-install.log` на новой машине).
-4. Перенести со старой, если она ещё жива: `/var/www/<домен>` и `/var/lib/ntfy`.
-5. На релее заменить адрес в `/usr/local/etc/xray/config.json`
-   (`outbounds[0].settings.vnext[0].address`), затем
-   `xray run -test -c /usr/local/etc/xray/config.json` и `systemctl restart xray`.
-   Не забыть про набор `bypass` в `/etc/xray/xray-tproxy.nft` — там старый адрес.
-6. Проверить: `curl -x socks5h://127.0.0.1:1080 https://api.ipify.org` → новый IP.
-7. **Только теперь** `provision-do.py destroy --id <старый> --tag vpn-exit`
-   и убедиться, что он пропал из списка. Это обязательный шаг, а не опциональный:
-   забытая машина — счёт каждый месяц.
-
-Ключи REALITY при замене менять не нужно — они в `params.json` и просто
-переезжают на новую машину вместе с установщиком.
-
-## Трафик и счета
+## The drill
 
 ```bash
-sudo wg show wg-clients transfer     # по каждому устройству, с момента поднятия
+sudo /usr/local/sbin/vpn-drill.sh --check   # readiness check only, breaks nothing
+sudo /usr/local/sbin/vpn-drill.sh           # a real outage of ~2 minutes
 ```
 
-Панель показывает 14 дней истории. Прикидывай месячный расход: выше 800 ГБ при
-квоте 1 ТБ — пора либо на дроплет за $12, либо разбираться, кто качает.
+The full run: readiness check → block the path to the exit (the server abroad) →
+wait for failover → lift the block → wait for restore → compare the client set
+before and after → report via notifications. A safety net via
+`systemd-run --on-active=10min` lifts the block even if the script dies.
 
-Раз в месяц полезно посмотреть `provision-do.py list` целиком: не завелось ли
-лишних машин.
+It runs on its own on the night of the 1st of each month; the readiness check runs
+every Monday. Log: `/var/lib/vpn-monitor/drill.log`.
 
-## Что где лежит
+The drill is the only way to know that automatic failover works. A failover that is
+configured but has never been tested is not a failover.
 
-**Релей**
+## Replacing the exit after its IP gets blocked (~15 minutes)
 
-| Путь | Что это |
+The order is strict.
+
+1. `provision-do.py list --tag vpn-exit` — note the old machine's id and IP. If there
+   is more than one machine, clean that up first.
+2. Create the new one **with `--ssh-key`** and the same `out/setup-exit.sh`.
+3. Point the `@`, `www` and `push` A records at the new IP and wait for the
+   certificates (watch `/var/log/vpn-kit-install.log` on the new machine).
+4. Copy over from the old machine, if it is still alive: `/var/www/<domain>` and `/var/lib/ntfy`.
+5. On the relay, replace the address in `/usr/local/etc/xray/config.json`
+   (`outbounds[0].settings.vnext[0].address`), then
+   `xray run -test -c /usr/local/etc/xray/config.json` and `systemctl restart xray`.
+   Do not forget the `bypass` set in `/etc/xray/xray-tproxy.nft` — the old address is in there.
+6. Verify: `curl -x socks5h://127.0.0.1:1080 https://api.ipify.org` → the new IP.
+7. **Only now** run `provision-do.py destroy --id <old id> --tag vpn-exit`
+   and confirm it is gone from the list. This step is mandatory, not optional:
+   a forgotten machine is a bill every month.
+
+The REALITY keys do not need to change on replacement — they live in `params.json`
+and simply move to the new machine along with the installer.
+
+## Traffic and bills
+
+```bash
+sudo wg show wg-clients transfer     # per device, since the interface came up
+```
+
+The panel shows 14 days of history. Estimate the monthly usage: above 800 GB on a
+1 TB quota, it is time either to move to the $12 droplet or to find out who is downloading.
+
+Once a month it is worth looking through the full `provision-do.py list` output:
+check that no stray machines have appeared.
+
+## What lives where
+
+**The relay**
+
+| Path | What it is |
 |---|---|
-| `/usr/local/etc/xray/config.json` | конфиг Xray (клиент REALITY) |
-| `/etc/xray/xray-tproxy.nft` | перехват; наборы `proxied_src` и `bypass` |
-| `/etc/xray/wgports.nft` | redirect udp/443 → порт WireGuard (юнит `vpn-wgports`) |
-| `/usr/local/sbin/vpn-*.py`, `vpn-*.sh` | монитор, сторож, разделение, диагностика, учения |
-| `/usr/local/share/vpn-monitor/index.html` | панель |
+| `/usr/local/etc/xray/config.json` | Xray config (REALITY client) |
+| `/etc/xray/xray-tproxy.nft` | interception; the `proxied_src` and `bypass` sets |
+| `/etc/xray/wgports.nft` | redirect udp/443 → WireGuard port (unit `vpn-wgports`) |
+| `/usr/local/sbin/vpn-*.py`, `vpn-*.sh` | monitor, watchdog, split routing, diagnostics, drill |
+| `/usr/local/share/vpn-monitor/index.html` | the panel |
 | `/etc/vpn-monitor/` | `config.json`, `admin-token`, `alerts.json`, `direct-domains.txt`, `names.json` |
-| `/var/lib/vpn-monitor/` | `stats.db` (14 дней), `health.json`, `failover-set.json`, `drill.log`, снимки диагностики |
-| `/etc/wireguard/` | ключи сервера, конфиги клиентов, `removed/` — архив удалённых |
+| `/var/lib/vpn-monitor/` | `stats.db` (14 days), `health.json`, `failover-set.json`, `drill.log`, diagnostic snapshots |
+| `/etc/wireguard/` | server keys, client configs, `removed/` — archive of deleted clients |
 
-**Выходная машина**
+**The exit**
 
-| Путь | Что это |
+| Path | What it is |
 |---|---|
 | `/usr/local/etc/xray/config.json` | inbound VLESS+XHTTP+REALITY |
-| `/etc/nginx/sites-enabled/` | `:80` (ACME и редирект) и `127.0.0.1:8443` (цель self-steal, ntfy) |
-| `/var/www/<домен>/` | сайт-прикрытие |
-| `/etc/ntfy/server.yml`, `/var/lib/ntfy/` | уведомления |
-| `/root/vpn-kit/exit-summary.txt` | сводка по установке (режим 600) |
-| `/var/log/vpn-kit-install.log` | журнал установки |
+| `/etc/nginx/sites-enabled/` | `:80` (ACME and redirect) and `127.0.0.1:8443` (self-steal target, ntfy) |
+| `/var/www/<domain>/` | the cover site |
+| `/etc/ntfy/server.yml`, `/var/lib/ntfy/` | notifications |
+| `/root/vpn-kit/exit-summary.txt` | install summary (mode 600) |
+| `/var/log/vpn-kit-install.log` | install log |
