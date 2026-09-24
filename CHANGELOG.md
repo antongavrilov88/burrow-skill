@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- feat(landing): refund terms stated under the guarantee — a failed verification is a full automatic refund, anything else inside 14 days on request. The guarantee wording itself is unchanged.
 - perf(landing): first paint 2.8 s → 0.9 s (Lighthouse mobile, simulated throttling): the Google Fonts stylesheet no longer blocks render, an inline SVG favicon removes the /favicon.ico 404, `fonts.gstatic.com` is preconnected and the portrait is lazy with intrinsic size. 100/100/100/100 against a budget now recorded in `docs/UX-REVIEW.md`.
 - feat(landing): a collapsed "What actually gets installed" disclosure under How it works — cover, devices, panel, watchdog, split routing, layouts — for readers who want the stack before the README.
 - feat(landing): the offer is now legible from the hero. Two equally weighted paths side by side — free skill (developers are never charged) and the $29 agent, with "Opens in November" as a badge rather than a button subtitle; both the word "free" and the price are above the fold at 1280 and 390. Section 4 is a Yourself / With the agent comparison (what you do, what Burrow does, time, price, guarantee) with the chat mockup and price as its right column; nav reads "Free skill" and "Set it up for me"; a bridge line between the free and paid paths for people who started alone and got stuck.
