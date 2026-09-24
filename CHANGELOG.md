@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix(landing): columns actually line up. The hero cards' label, amount, heading, body and button now share a baseline grid, and all four comparison rows align across both columns with the columns themselves equal height — previously the free column was 542px against the paid column's 1333px. The reservations are released below 760px, where the cards stack and alignment is meaningless.
 - fix(landing): five-agent UI/UX review (conversion, copy, visual hierarchy, trust, mobile). Claims corrected to match the code — see the truth commit. The paid tier no longer reads as "the same skill, but you pay": it sells risk transfer, not a delivery format. Free path states its prerequisite (Claude Code) and offers the install command inline; the waitlist gives a reason before the button, not after. On phone the paid path leads, because a phone cannot run the install command, and the two aria-hidden mockups are hidden. Tap targets, hover gating for iOS, disclosure affordance, `aria-pressed` on the theme toggle, and ~15 lines of dead CSS.
 - fix(landing): the free path now carries the visual emphasis instead of the paid one — accent border and fill, and a price line on both cards so "Free / forever" reads as a value next to "$29 / one time". The paid card is quieter, which also matches it not being live yet.
 - feat(landing): refund terms stated under the guarantee — a failed verification is a full automatic refund, anything else inside 14 days on request. The guarantee wording itself is unchanged.
