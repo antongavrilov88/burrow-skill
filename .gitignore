@@ -20,3 +20,7 @@ __pycache__/
 
 # Private handoff notes, never published
 KICKOFF.md
+
+# session handoff files, never committed
+.claude-handoff/
+.pr-body.md

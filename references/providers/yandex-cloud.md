@@ -4,11 +4,14 @@
 
 | | |
 |---|---|
-| **Layer** | **relay only.** It is inside the country; it must never be the exit. |
+| **Layer** | **relay** (home-country relay for users in the same country). Never the exit for those users. |
+| **Last verified** | 2026-09-24 (relay tested by hand). |
 | **Automation** | Manual. The platform has an API and the `yc` CLI, but this skill does not drive them. |
 | **Machine** | Compute Cloud VM: **Ubuntu 24.04**, 2 vCPU at **20% core share**, 1 GB RAM, 10 GB HDD, a **public IPv4** — the cheapest configuration, on the order of 300–600 ₽ a month at last check. Egress traffic beyond the free allowance is billed per gigabyte and is the line item that surprises people: the free allowance was 100 GB a month in the original notes and may be smaller now — check the pricing page — and a family watching video passes it either way. Count before you promise a price; a flat-rate VPS (`provisioning.md`, relay-capable hosts) avoids the question. |
-| **Payment** | Cards of the local banking system, corporate invoices. Requires a Yandex ID. New accounts get a starter grant — do not rely on it for the monthly figure. |
-| **Known blocked ranges** | Not applicable — the address is domestic, which is the point. What can happen instead is that the provider, being legally obliged to follow local filtering orders, starts dropping the tunnel to the exit: that is why the relay profile has a watchdog that fails everyone over to the direct route and back. |
+| **Signup** | A Yandex ID (email or phone), a phone number for confirmation, and a billing account with a card; no ID document for individuals. |
+| **Payment** | Cards of the local banking system, corporate invoices. New accounts get a starter grant — do not rely on it for the monthly figure. |
+| **Known blocked ranges** | Not applicable — the address is domestic, which is the point. What can happen instead is that the provider, following local filtering orders, starts dropping the tunnel to the exit: that is why the relay profile has a watchdog that fails everyone over to the direct route and back. |
+| **Firewall** | **Security groups.** If the network has a default security group, add inbound rules for `22` tcp, `443` udp and `51821` udp (and `443` tcp if the alternative WireGuard port is used); a VM without any security group has no cloud filtering. |
 | **Quirks** | The login is the user you name when creating the VM, **not root**, with passwordless `sudo`: the two lines become `scp … <user>@<IP>:~/` and `ssh <user>@<IP> 'sudo bash ~/setup-relay.sh'`. The metadata **user-data** field exists — **do not** put the relay installer in it: metadata is readable by any local process and the relay installer carries the panel code and the tunnel identifiers. Deliver it over SSH. |
 
 ## Click paths

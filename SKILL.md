@@ -47,19 +47,19 @@ Do not skip steps and do not reorder them: each one relies on the check at the e
 
 Ask this first, in plain words (with AskUserQuestion if you have it; the questions of this step are the only place where you ask several things in one message):
 
-> **Where are the people who'll use this, and do they hit networks that only allow whitelisted traffic (typical on mobile data in some countries)?**
+> **Where are the people who'll use this, and does their network restrict direct foreign connections or only allow listed IP ranges (typical on carrier-restricted mobile networks)?**
 
 | What they answer | Profile |
 |---|---|
 | Abroad, or somewhere the internet is not filtered: "just me, I travel", "friends in a few countries", "I live abroad and need services from home" | `single` |
 | In a country with filtering, but on ordinary networks: a VPN app on their phone connects fine on mobile data, and you can reach their devices when something changes | `single` |
-| In a country with filtering **and** some networks — mobile data first of all — let through only what is on an allow-list; or it is a household whose phones you cannot keep reconfiguring | `relay` |
+| Their network restricts direct foreign connections or only allows listed IP ranges — carrier-restricted mobile networks first of all; or it is a household whose phones you cannot keep reconfiguring | `relay` |
 | They do not know | One follow-up, still in plain words: "On their phone, with Wi-Fi off, does any VPN app connect at all?" If nobody can check, take `single` and say that a relay can be added later, at the price of a new QR code on every device. |
 
 Do not ask about "topology" or "relay" by name, and do not turn the one question above into a questionnaire about their networks. You choose; they describe their people. If their first message already answers it, say your reading in one sentence and ask only what is left.
 
 - **`single`** (default) — one server abroad. Devices connect to it directly; the panel, the watchdog and WireGuard live on it. This is the path the landing page describes.
-- **`relay`** — a small server in the users' home country in front of the same server abroad. Devices talk WireGuard to the relay, a domestic address that survives allow-lists better than any foreign one; the relay carries one disguised connection across the border; when the exit gets blocked you replace it and nobody at home touches their phone. Everything specific to this profile is marked **[relay]** below.
+- **`relay`** — a small server in the users' home country in front of the same server abroad. Devices talk WireGuard to the relay, a home-country address that stays reachable on carrier-restricted networks where a foreign one does not; the relay carries one disguised connection across the border; when the exit gets blocked you replace it and nobody at home touches their phone. Everything specific to this profile is marked **[relay]** below.
 
 In the same message ask, in their words (wording: `lang/<xx>.md` §0):
 
@@ -150,7 +150,7 @@ Do not continue until both agree. `curl` refuses a bad certificate, so `HTTP/2 2
 
 **The cover site.** The template that landed in `/var/www/<domain>/` is a page of self-hosting notes, in Russian. Two things to do now, not "some day":
 
-- If the person does not write in Russian, rewrite the page in their language before you hand anything over — three honest paragraphs about anything of theirs (a hobby, notes, a photo archive). A Russian page on a server on another continent for a non-Russian user is a mismatch a reviewer notices. How: over SSH, replace `/var/www/<domain>/index.html` with a plain static page in the same shape (title, a few dated notes, `<html lang="xx">` for their language; the Russian original in `scripts/payload/site/index.html` shows the structure), keep a copy at `/root/vpn-kit/index.html`, then `curl -s https://<domain> | grep -c <a word from the new text>`. **Every run of the installer regenerates that page from the Russian template**, so do the rewrite after the last installer run, and after any later re-run copy your version back and check again.
+- If the person does not write in Russian, rewrite the page in their language before you hand anything over — three honest paragraphs about anything of theirs (a hobby, notes, a photo archive). A Russian page on a server on another continent for a user who does not read it is a mismatch a reviewer notices. How: over SSH, replace `/var/www/<domain>/index.html` with a plain static page in the same shape (title, a few dated notes, `<html lang="xx">` for their language; the Russian original in `scripts/payload/site/index.html` shows the structure), keep a copy at `/root/vpn-kit/index.html`, then `curl -s https://<domain> | grep -c <a word from the new text>`. **Every run of the installer regenerates that page from the Russian template**, so do the rewrite after the last installer run, and after any later re-run copy your version back and check again.
 - Say to them, in their words (`lang/<xx>.md`, "Between the steps"): the page exists so that a check sees an ordinary website; the same template on a dozen addresses becomes a fingerprint, so the text should become their own. Offer to write it with them — thirty seconds of work that measurably improves the disguise.
 
 ### 5. [relay] The relay, in the users' country
@@ -214,7 +214,7 @@ python3 scripts/make-handout.py --params params.json --out pamyatka.md     # Rus
 
 Any other language: render `references/lang/handout-<xx>.md` from `params.json` into `handout.md` (the English template exists; the rules are at the top of the file). Same content, same sections, same variables as the script.
 
-Send it as a file (SendUserFile, or whatever file hand-over your environment has). **Never publish it as a page**: it contains the panel code and the alert password. The Russian text prices the domain in roubles, in `relay` calls the relay "the server in Russia", and in `single` still mentions the monthly self-test that only the relay has — the script's tested wording; if a line is wrong for this family, say so in one sentence or correct that line in the generated file, not in the script.
+Send it as a file (SendUserFile, or whatever file hand-over your environment has). **Never publish it as a page**: it contains the panel code and the alert password. The Russian text prices the domain in roubles, in `relay` calls the relay "the server in the home country", and in `single` still mentions the monthly self-test that only the relay has — the script's tested wording; if a line is wrong for this family, say so in one sentence or correct that line in the generated file, not in the script.
 
 ### 9. Say goodbye
 

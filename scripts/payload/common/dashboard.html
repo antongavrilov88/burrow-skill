@@ -238,11 +238,11 @@ body[data-mode="single"] .only-single{display:inline}
 
   <section class="card only-multipath">
     <h2>Исключения — идут напрямую с релея</h2>
-    <p class="hint">Эти домены не заворачиваются в туннель: запрос уходит с российского адреса. Сюда — банки,
-      госуслуги и всё, что ругается на зарубежный IP. Поддомены включаются сами: <code>vk.com</code> покрывает и <code>m.vk.com</code>.</p>
+    <p class="hint">Эти домены не заворачиваются в туннель: запрос уходит с адреса релея. Сюда — приложения,
+      которые отказываются работать через VPN: банки, госпорталы и всё, что ругается на зарубежный IP. Поддомены включаются сами: <code>vk.com</code> покрывает и <code>m.vk.com</code>.</p>
     <div class="tags" id="direct"></div>
     <div class="addrow">
-      <input id="dom" type="text" placeholder="например, sberbank.ru" autocomplete="off" spellcheck="false">
+      <input id="dom" type="text" placeholder="например, mybank.example" autocomplete="off" spellcheck="false">
       <button id="add">Добавить</button><span class="saving" id="saving"></span>
     </div>
   </section>
