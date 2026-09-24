@@ -12,11 +12,17 @@ Provider is a parameter of each layer, not of the profile: any Ubuntu 24.04 host
 | [`providers/hetzner.md`](providers/hetzner.md) | exit | manual (console + SSH) | card, PayPal, SEPA; identity check | written 2026-09-24 |
 | [`providers/vultr.md`](providers/vultr.md) | exit | manual | card, PayPal, Alipay, WeChat Pay, crypto | written 2026-09-24 |
 | [`providers/yandex-cloud.md`](providers/yandex-cloud.md) | relay | manual | local cards | written 2026-09-24 |
+| [`providers/alibaba-cloud.md`](providers/alibaba-cloud.md) | relay or exit | manual | international and local cards, Alipay, PayPal | written 2026-09-24 |
+| [`providers/arvancloud.md`](providers/arvancloud.md) | relay or exit | manual | local cards, crypto via partners | written 2026-09-24 |
 | [`providers/generic-ubuntu.md`](providers/generic-ubuntu.md) | exit or relay | manual | whatever the host takes | — |
 
 **Requirements for either layer:** Ubuntu 24.04, 1 vCPU, 1 GB of memory, a real public IPv4, a sensible traffic quota. That is enough for a gigabit — the bottleneck is always traffic, never the CPU. The installers open what each layer needs: the exit `22/80/443` tcp (plus `443` and `51821` udp in the `single` profile), the relay `22` tcp and `443` + `51821` udp — the provider's own firewall, if any, must not block those. **The relay additionally wants** cheap or free inbound traffic (everything the users do passes through it twice) and, obviously, a different provider from the exit's.
 
-**Relay-capable hosts** (inside the users' country; written 2026-09-24, not re-verified live): flat-rate VPS plans are the better fit for a household — Timeweb Cloud, Selectel, Beget, RuVDS in Russia, any local VPS elsewhere; Yandex Cloud works but bills egress per gigabyte (`providers/yandex-cloud.md`). Aeza is excluded (see below). Requirements as above plus a traffic quota of 1 TB or unlimited.
+**The relay layer.** Provider is a parameter: any Ubuntu 24.04 VPS in the users' home country. The only reason to choose the relay layout is that their network restricts direct foreign connections or only allows listed IP ranges.
+
+> **Before picking a home-country provider, say this to the person:** a provider in your home country knows who you are and can see that you run a tunnel; choose accordingly.
+
+**Relay-capable hosts** (written 2026-09-24, not re-verified live): flat-rate VPS plans are the better fit for a household. Documented in `providers/`: Yandex Cloud, Alibaba Cloud, ArvanCloud (each bills egress per gigabyte or per plan — count before promising a price); any other local flat-rate VPS through `providers/generic-ubuntu.md`. Aeza is excluded (see below). Requirements as above plus a traffic quota of 1 TB or unlimited.
 
 ## No card that works?
 

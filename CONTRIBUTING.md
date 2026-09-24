@@ -11,7 +11,7 @@
 
 ## Release flow
 
-1. Work on `feat/...`, open a PR into `dev`. CI runs syntax checks and a secrets scan.
+1. Work on `feat/...`, open a PR into `dev`. CI runs syntax checks, a secrets scan and the wording guard.
 2. When `dev` is ready for a release, tag a candidate on it: `git tag v0.2.0-rc.1 && git push --tags`. The release workflow publishes a **pre-release** with `burrow-skill.zip` — test-install that zip in Claude.
 3. Fix on `dev`, tag `-rc.2` if needed.
 4. Open a PR `dev → main`, merge (merge commit, not squash — keep history). Tag `v0.2.0` on `main`, push the tag. The workflow publishes the release; Pages redeploys the landing if `docs/` changed.
@@ -30,6 +30,25 @@ Semantic. The skill's user-facing behaviour is the API: a change to what the ins
 ## Language and wording
 
 `SKILL.md` and `references/*.md` are English instructions. Everything said to the person lives in `references/lang/<xx>.md`; the Russian file and the Russian handout are wording tested with real families — change them only after testing the new wording on a real person, and say so in the PR. New languages: translate `lang/en.md` and `lang/handout-en.md`, keep the section numbers. `skills/burrow/SKILL.md` is generated from the root `SKILL.md` frontmatter; if you change the description, regenerate it (CI fails otherwise).
+
+## Wording rules
+
+Burrow is a world-wide product. The public surface — `SKILL.md`, `references/`, `scripts/` comments and printed strings, `README.md`, `CHANGELOG.md`, this file, `SECURITY.md`, `.github/`, `docs/` — names no country as the reason the product exists. CI runs `.github/wording-guard.sh` on every PR and fails on any of the terms below, case-insensitive, in Latin and Cyrillic.
+
+**Banned:** `RKN`, `Roskomnadzor` / `Роскомнадзор`, `Sberbank` / `Сбер` / `Сбербанк`, `обход блокировок`, `белые списки` / `белый список`, `whitelist` / `whitelists` (when it means a carrier's allow-list in one country), `Russian sites`, `works in Russia`, `in Russia`, `VPN for Russians`, `Russian` + exit / bank / IP / address / card / hosting / provider / law / carrier / network / user / household, `Россия` / `в России` / `российский` / `РФ`.
+
+**Approved instead:**
+
+| Say | Not |
+|---|---|
+| home-country relay | relay in Russia, Russian relay |
+| carrier-restricted networks | networks with whitelists, mobile internet in Russia |
+| allowlisted IP ranges | whitelist, белые списки |
+| apps that refuse VPN connections keep working | Sberbank works, banks work without toggling |
+| local sites stay reachable, foreign sites are unavailable | internet works without обход блокировок |
+| your network restricts direct foreign connections or only allows listed IP ranges | the one and only reason to choose the `relay` profile |
+
+What stays allowed: the *language* sense — "the panel is in Russian", `lang/ru.md`, `handout-ru.md` — because the server-side UI has a language and it has to be named. Provider files describe signup facts neutrally ("cards issued in some sanctioned countries are refused"), never by naming the country the user is in. Script logic and server paths (`/opt/vpn-kit`) are out of scope of the guard and of this section.
 
 ## Rules the skill itself follows (keep them when you change it)
 
