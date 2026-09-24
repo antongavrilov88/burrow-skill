@@ -4,11 +4,14 @@
 
 | | |
 |---|---|
-| **Layer** | **exit**. Thirty-odd locations on every continent; still not a relay, because none of them are inside the filtered countries this profile exists for. |
+| **Layer** | **exit**. Thirty-odd locations on every continent; still not a relay unless one of them happens to be inside the users' home country. |
 | **Automation** | Manual. The person deploys in the console; you install over SSH (a startup script is possible but untested here). |
+| **Last verified** | 2026-09-24 (pages read, not tested). |
 | **Machine** | **Cloud Compute → Regular Performance**, 1 vCPU / 1 GB, $5–6/month with 1–2 TB of traffic depending on the location. Ubuntu 24.04 is a stock image. |
+| **Signup** | Email and a payment method; a deposit may be required before the first deploy. No ID for most countries; a phone number is sometimes asked for fraud checks. |
 | **Payment** | Cards, PayPal, Alipay, WeChat Pay and **cryptocurrency** (through a payment processor) — one of the few mainstream providers that takes crypto. New accounts often have to prepay a deposit and are limited to a handful of instances at first. Check the billing page on the day: methods come and go by country. |
 | **Known blocked ranges** | Nothing systematic known; individual addresses get blocked as anywhere, and some Vultr ranges carry a reputation from earlier abuse — if a fresh instance's IP is unreachable from the users' country, redeploy in another location. |
+| **Firewall** | Off by default (a **Firewall Group** can be attached in the console); if attached, allow `22/80/443` tcp and `443/51821` udp inbound. |
 | **Quirks** | IPv6 is optional; leave it on. The console offers **Startup Scripts** and a **Cloud-Init User-Data** field at deploy time; SSH is the path this skill has verified for manual providers. |
 
 ## Click paths

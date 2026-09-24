@@ -5,10 +5,13 @@
 | | |
 |---|---|
 | **Layer** | **exit or relay**, whichever side of the border the machine is on. A relay must be inside the users' country; an exit must be outside it. Never the same provider for both. |
+| **Last verified** | — (no dated facts in this file). |
 | **Automation** | Manual: the person orders the machine, you install over SSH (or the person pastes two lines — `human-steps.md` §7). |
 | **Machine** | Ubuntu **24.04 LTS** (not 22.04, not Debian), 1 vCPU, 1 GB RAM, 10 GB disk, a **dedicated public IPv4** (not behind CGNAT, not "shared IP"), root or a user with passwordless `sudo`, and a traffic quota of 1 TB or more — for a relay count everything twice. That is enough for a gigabit; the ceiling is always traffic, not CPU. |
+| **Signup** | Whatever the provider asks — email is the minimum; local hosts commonly want a local phone number and sometimes an ID. Ask the person to read the signup page before paying. |
 | **Payment** | Whatever the provider takes. The "No card that works?" list in `references/provisioning.md` names hosts known to accept crypto or regional cards, dated. |
 | **Known blocked ranges** | Unknown by definition — check reachability from the users' side before you build anything on it: a phone on mobile data opening `http://<IP>` (before the install there is nothing to see, but a timeout tells you enough). |
+| **Firewall** | Unknown: check the provider's panel for a security group or "firewall" tab and allow the ports of the layer (`provisioning.md`, requirements); on the machine the installer handles nftables. |
 | **Quirks** | Some providers ship Ubuntu images with a pre-enabled firewall (`ufw`) or with `unattended-upgrades` running at first boot; the installer waits for apt for up to five minutes and configures nftables itself. If the provider's console offers a cloud-init field, it is acceptable for the exit installer only, and only if it fits the size limit. |
 
 ## Before installing, from the machine

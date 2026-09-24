@@ -1,5 +1,5 @@
 # Runs on every PR and on pushes to dev/main: syntax checks for the skill's scripts,
-# and a check that the landing has no leftover placeholders.
+# a wording guard (CONTRIBUTING.md, "Wording rules"), and a check that the landing has no leftover placeholders.
 name: ci
 on:
   pull_request:
@@ -38,6 +38,8 @@ jobs:
       - name: No secrets in the tree
         run: |
           ! grep -rnE 'dop_v1_[A-Za-z0-9]{20,}|tk_[a-z0-9]{20,}|BEGIN (RSA|OPENSSH|EC) PRIVATE' --exclude-dir=.git . || (echo "possible secret committed" && exit 1)
+      - name: No country-specific wording
+        run: bash .github/wording-guard.sh
       - name: No placeholders on main
         if: github.ref == 'refs/heads/main' || github.base_ref == 'main'
         run: |

@@ -16,7 +16,7 @@ The click steps below are the spoken form of the DigitalOcean paths. `providers/
 
 The layout question, exactly as asked:
 
-> "Where are the people who'll use this, and do they hit networks that only allow whitelisted traffic (typical on mobile data in some countries)?"
+> "Where are the people who'll use this, and does their network restrict direct foreign connections or only allow listed IP ranges (typical on carrier-restricted mobile networks)?"
 
 Examples they can pick from:
 

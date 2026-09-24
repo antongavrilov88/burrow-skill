@@ -22,7 +22,7 @@ The server is yours. The domain is yours. The keys never leave your machine. The
 
 ### Two profiles, one question
 
-Claude asks one thing first: *"Where are the people who'll use this, and do they hit networks that only allow whitelisted traffic (typical on mobile data in some countries)?"* The answer picks the profile. You don't need to know what any of the below means.
+Claude asks one thing first: *"Where are the people who'll use this, and does their network restrict direct foreign connections or only allow listed IP ranges (typical on carrier-restricted mobile networks)?"* The answer picks the profile. You don't need to know what any of the below means.
 
 **`single`** (the default) — one server abroad. You, or a few people, anywhere; devices connect straight to it. Simplest and cheapest.
 
@@ -31,7 +31,7 @@ devices ──WireGuard──▶ your server abroad ──▶ internet
 devices ──VLESS+REALITY──┘   (for Hiddify / v2rayNG users)
 ```
 
-**`relay`** — for a household inside a filtered country whose devices you can't keep reconfiguring, or whose mobile networks only let whitelisted traffic through. Devices talk WireGuard to a cheap server *inside* the country; that relay carries one disguised connection across the border. When the exit gets banned you replace it in fifteen minutes and nobody at home touches their phone.
+**`relay`** — for people whose network restricts direct foreign connections or only allows listed IP ranges, or a household whose devices you can't keep reconfiguring. Devices talk WireGuard to a cheap server *inside* the country; that relay carries one disguised connection across the border. When the exit gets banned you replace it in fifteen minutes and nobody at home touches their phone.
 
 ```
 devices ──WireGuard──▶ relay (home country) ──VLESS+XHTTP+REALITY──▶ exit (abroad) ──▶ internet
