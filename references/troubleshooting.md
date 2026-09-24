@@ -1,141 +1,143 @@
-# Разбор поломок
+# Troubleshooting
 
-Идти сверху вниз, останавливаться на первом несоответствии. Первым делом —
-снимок состояния: `sudo /usr/local/sbin/vpn-diag.sh` (печатает путь к файлу).
+Work top to bottom and stop at the first mismatch. First thing: take a state
+snapshot with `sudo /usr/local/sbin/vpn-diag.sh` (it prints the path to the file).
 
-## Сертификат не выдаётся
+## The certificate is not being issued
 
-Симптом: установщик шесть раз пишет «сертификат для … не вышел» и падает.
+Symptom: the installer prints `сертификат для … не вышел` ("certificate for … failed" — the installers log in Russian) six times and exits.
 
-Почти всегда DNS. Проверить:
+Almost always DNS. Check:
 
 ```bash
-dig +short A <домен> @1.1.1.1        # должен вернуть IP выходной машины
-dig +short A push.<домен> @1.1.1.1
+dig +short A <domain> @1.1.1.1        # must return the exit's IP
+dig +short A push.<domain> @1.1.1.1
 ```
 
-- Пусто или чужой адрес → A-записи не поставлены или не разошлись. Поставить,
-  подождать (TTL), запустить установщик ещё раз.
-- Адрес верный, но всё равно не выходит → проверь, что 80/tcp открыт снаружи
-  (`curl -I http://<домен>`) и что nginx отдаёт `/.well-known/acme-challenge/`.
-- `too many certificates already issued` → упёрлись в лимит Let's Encrypt
-  (5 штук на домен в неделю). Ждать неделю или взять поддомен.
+- Empty or someone else's address → the A records are not set or have not
+  propagated. Set them, wait (TTL), run the installer again (after cloud-init:
+  `bash /opt/vpn-kit/exit/install.sh`).
+- The address is right but it still fails → check that 80/tcp is open from the
+  outside (`curl -I http://<domain>`) and that nginx serves `/.well-known/acme-challenge/`.
+- `too many certificates already issued` → you have hit the Let's Encrypt limit
+  (5 per domain per week). Wait a week or use a subdomain.
 
-Без сертификата REALITY бесполезен: активное зондирование получит ошибку TLS
-вместо настоящего сайта, и это заметнее, чем отсутствие VPN.
+Without a certificate REALITY is useless: active probing gets a TLS error instead
+of a real site, and that stands out more than having no VPN at all.
 
-## Установка встала на «жду apt»
+## The install is stuck on apt (`жду` lines in the log)
 
-Cloud-init на свежей машине конкурирует с автообновлением. Установщик ждёт
-до пяти минут и идёт дальше. Если завис дольше:
+Cloud-init on a fresh machine competes with unattended upgrades. The installer
+waits up to five minutes and then moves on. If it hangs longer than that:
 
 ```bash
 ssh root@<IP> 'systemctl stop unattended-upgrades; bash /root/setup-exit.sh'
 ```
 
-## Клиенты подключились, но интернета нет
+## Clients connect, but there is no internet
 
 ```bash
-sudo wg show wg-clients            # есть ли свежее рукопожатие
-sysctl net.ipv4.ip_forward         # должно быть 1
-sudo nft list table ip vpnnat      # должно быть правило masquerade
+sudo wg show wg-clients            # is there a fresh handshake?
+sysctl net.ipv4.ip_forward         # must be 1
+sudo nft list table ip vpnnat      # there must be a masquerade rule
 ```
 
-- Рукопожатия нет → до сервера не доходит UDP. Проверь фаервол
-  (`nft list ruleset | grep dport`) и что провайдер не режет порт. Попробуй
-  выпустить клиента на порт 443.
-- Рукопожатие есть, трафика нет → почти всегда NAT или forwarding.
-  `systemctl restart wg-quick@wg-clients` пересоздаёт правило.
-- Открываются мелкие страницы, зависают крупные → MTU. В конфиге клиента
-  должно быть `MTU = 1280`.
+- No handshake → UDP is not reaching the server. Check the firewall
+  (`nft list ruleset | grep dport`) and that the ISP is not cutting the port. Try
+  issuing a client on port 443.
+- Handshake present, no traffic → almost always NAT or forwarding.
+  `systemctl restart wg-quick@wg-clients` recreates the rule.
+- Small pages open, large ones hang → MTU. The client config must have
+  `MTU = 1280`.
 
-## Туннель не работает (проба через socks не проходит)
+## The tunnel is down (the socks probe fails)
 
-Порядок проверки на релее:
+Order of checks on the relay:
 
-1. **Нет интернета с самой машины** (`curl -sI https://www.gstatic.com`) →
-   проблема провайдера релея. Подождать, сообщить человеку.
-2. **443 до выхода молчит, 22 отвечает** → на выходной машине проверить,
-   слушает ли Xray (`ss -lntp | grep 443`). Слушает → фильтрация на границе,
-   переходи к «замене машины» в `operations.md`.
-3. **Ни 443, ни 22, ping не проходит** → проверить состояние машины через
-   `provision-do.py list`. Живая и не отвечает → бан IP → замена машины.
-4. **TLS отдаёт не тот сертификат** (`openssl s_client -connect <IP>:443
-   -servername <домен>` показывает чужой issuer) → вмешательство в трафик →
-   замена машины.
-5. **Всё доступно, но Xray на релее ругается** → `journalctl -u xray -n 40`,
-   `xray run -test -c /usr/local/etc/xray/config.json`, сверить UUID, публичный
-   ключ, shortId и path с конфигом выходной машины
-   (`/root/vpn-kit/exit-summary.txt`). Расхождение хотя бы в одном — тишина
-   без внятной ошибки.
+1. **No internet from the machine itself** (`curl -sI https://www.gstatic.com`) →
+   the relay's provider has a problem. Wait, and tell the person.
+2. **443 to the exit is silent, 22 answers** → on the exit, the server abroad,
+   check whether Xray is listening (`ss -lntp | grep 443`). It is → filtering at
+   the border; go to "Replacing the exit" in `operations.md`.
+3. **Neither 443 nor 22, ping does not get through** → check the machine's state
+   with `provision-do.py list`. Alive but not answering → the IP got blocked →
+   replace the machine.
+4. **TLS serves the wrong certificate** (`openssl s_client -connect <IP>:443
+   -servername <domain>` shows a foreign issuer) → traffic is being tampered with →
+   replace the machine.
+5. **Everything is reachable, but Xray on the relay complains** → `journalctl -u xray -n 40`,
+   `xray run -test -c /usr/local/etc/xray/config.json`, and compare the UUID,
+   public key, shortId and path against the exit's config
+   (`/root/vpn-kit/exit-summary.txt`). A mismatch in even one of them means
+   silence with no clear error.
 
-## `failover: true` и не возвращается
+## `failover: true` and it is not coming back
 
-- Туннель отвечает, а откат висит → сторож ждёт 5 (или 20 при флапе) успешных
-  проб. Больше двух часов → вернуть вручную:
+- The tunnel answers but the failover is still in place → the watchdog is waiting
+  for 5 (or 20 when flapping) successful probes. More than two hours → restore by hand:
 
 ```bash
 sudo nft add element ip xray_tproxy proxied_src { $(python3 -c "import json;print(', '.join(json.load(open('/var/lib/vpn-monitor/failover-set.json'))))") }
 sudo systemctl restart vpn-watchdog
 ```
 
-- Туннель не отвечает → это не сбой отката, это настоящая поломка, см. выше.
+- The tunnel does not answer → this is not a failover bug, it is a real outage; see above.
 
 ## `fallback_ok: false`
 
-Отдельная авария: запасной путь мёртв. Туннель пока работает, но падать некуда.
-Проверить прямой выход с релея:
+A separate emergency: the fallback route is dead. The tunnel still works for now,
+but there is nowhere to fail over to. Check the direct route out of the relay:
 
 ```bash
 curl -s -m 8 --interface 10.67.0.1 -o /dev/null -w '%{http_code}\n' https://www.gstatic.com/generate_204
 ```
 
-Обычно виноваты правила NAT или маршрутизации. `systemctl restart wg-quick@wg-clients`.
-Тихая, но опасная поломка — сказать человеку сразу.
+Usually the NAT or routing rules are to blame. `systemctl restart wg-quick@wg-clients`.
+A quiet but dangerous failure — tell the person right away.
 
-## Набор `proxied_src` пуст, а `failover: false`
+## The `proxied_src` set is empty, but `failover: false`
 
-Кто-то снял всех с туннеля вручную, либо это штатное состояние сразу после
-установки. Восстановить из `/var/lib/vpn-monitor/failover-set.json`, если он есть;
-если нет — спросить, кого возвращать.
+Either someone took everyone off the tunnel by hand, or this is the normal state
+right after install. Restore from `/var/lib/vpn-monitor/failover-set.json` if it exists;
+if not, ask who should be put back.
 
-## Панель не открывается
+## The panel does not open
 
-- Открывать только изнутри VPN, по адресу `http://<подсеть>.1:8088`. Снаружи её
-  нет — так и задумано.
+- Open it only from inside the VPN, at `http://<subnet>.1:8088`. It does not exist
+  from the outside — that is by design.
 - `systemctl status vpn-monitor`, `journalctl -u vpn-monitor -n 30`.
-- «нужен код администратора» → код в `/etc/vpn-monitor/admin-token`.
+- `нужен код администратора` ("admin code required") → the code is in `/etc/vpn-monitor/admin-token`.
 
-## Конфиг существующего клиента не отдаётся
+## An existing client's config cannot be downloaded
 
-Панель отдаёт конфиг, только если ключ создавался в ней же — приватные ключи
-клиентов, заведённых руками, на сервере не хранятся. Выход один: выпустить
-нового клиента и удалить старого.
+The panel hands out a config only if the key was created in the panel itself —
+private keys of clients added by hand are not stored on the server. The only way
+out: issue a new client and delete the old one.
 
-## Уведомления не приходят
+## Notifications are not arriving
 
 ```bash
 sudo python3 -c "import importlib.util;s=importlib.util.spec_from_file_location('w','/usr/local/sbin/vpn-watchdog.py');m=importlib.util.module_from_spec(s);s.loader.exec_module(m);print(m.notify('Тест','Проверка'))"
 ```
 
-`False` → смотри `/etc/vpn-monitor/alerts.json`. Сторож пробует каждую цель
-тремя путями (через туннель, напрямую, через интерфейс WireGuard) — если не
-прошло нигде, проверь токен ntfy и что `https://push.<домен>` вообще открывается.
-Публичная тема на `ntfy.sh` — запасной канал, она должна работать всегда.
+`False` → look at `/etc/vpn-monitor/alerts.json`. The watchdog tries each target
+three ways (through the tunnel, directly, and via the WireGuard interface) — if
+none of them got through, check the ntfy token and that `https://push.<domain>` opens at all.
+The public topic on `ntfy.sh` is the backup channel; it must always work.
 
-## Грабли, на которые уже наступали
+## Pitfalls we have already fallen into
 
-- **SSH до релея может идти через сам туннель.** Если туннель лёг — управления
-  нет, пока не выключить VPN на своей машине. Адрес релея прописан в наборе
-  `bypass`, но проверь это до того, как понадобится.
-- **`pkill -f <шаблон>` убивает собственную сессию**, если шаблон встречается
-  в её командной строке.
-- **`xray run -test` требует расширение `.json`** у файла конфига.
-- **Длинные команды по SSH рвутся на таймауте инструмента.** Запускай в фоне
-  через `setsid nohup ... & disown` с записью в файл.
-- **Бенчмарки на машине с двумя ядрами душат SSH.** Запускать в фоне.
-- **`/etc/nftables.conf` нарочно НЕ содержит `flush ruleset`** — он пересоздаёт
-  только свою таблицу `inet filter`. Таблицы `xray_tproxy`, `wgports` и `vpnnat`
-  живут отдельно и поднимаются своими юнитами (`xray-tproxy-route`,
-  `vpn-wgports`, `wg-quick@wg-clients`). Если правил не стало после
-  перезагрузки — `systemctl restart xray-tproxy-route vpn-wgports wg-quick@wg-clients`.
+- **SSH to the relay may itself go through the tunnel.** If the tunnel is down, you
+  have no control until you turn off the VPN on your own machine. The relay's
+  address is in the `bypass` set, but verify that before you need it.
+- **`pkill -f <pattern>` kills your own session** if the pattern appears in its
+  command line.
+- **`xray run -test` requires the `.json` extension** on the config file.
+- **Long commands over SSH get cut off by the tool's timeout.** Run them in the
+  background via `setsid nohup ... & disown`, writing output to a file.
+- **Benchmarks on a two-core machine choke SSH.** Run them in the background.
+- **`/etc/nftables.conf` deliberately does NOT contain `flush ruleset`** — it recreates
+  only its own `inet filter` table. The `xray_tproxy`, `wgports` and `vpnnat` tables
+  live separately and are brought up by their own units (`xray-tproxy-route`,
+  `vpn-wgports`, `wg-quick@wg-clients`). If the rules are gone after a
+  reboot — `systemctl restart xray-tproxy-route vpn-wgports wg-quick@wg-clients`.

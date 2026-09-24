@@ -18,41 +18,63 @@ The server is yours. The domain is yours. The keys never leave your machine. The
 - **A watchdog** that probes the tunnel every minute, restarts what died, fails over to the direct route and back, and pushes a notification to your phone. A monthly fire drill (a deliberate two-minute outage) proves the failover actually works, not just "is configured".
 - **Split routing.** Banks and government sites that break when they see a foreign IP go direct; everything else goes through the tunnel. Optional per-country GeoIP rule.
 - **Push notifications** through your own [ntfy](https://ntfy.sh) instance on the same server (public ntfy.sh as fallback).
-- **A one-page handout** for the person who will actually use it, in plain words, generated at the end.
+- **A one-page handout** for the person who will actually use it, in plain words and in their language, generated at the end.
 
-### Two layouts
+### Two profiles, one question
 
-**Single server** — you, or a few people, anywhere. Devices connect straight to the server abroad. Simplest and cheapest.
+Claude asks one thing first: *"Where are the people who'll use this, and do they hit networks that only allow whitelisted traffic (typical on mobile data in some countries)?"* The answer picks the profile. You don't need to know what any of the below means.
+
+**`single`** (the default) — one server abroad. You, or a few people, anywhere; devices connect straight to it. Simplest and cheapest.
 
 ```
 devices ──WireGuard──▶ your server abroad ──▶ internet
 devices ──VLESS+REALITY──┘   (for Hiddify / v2rayNG users)
 ```
 
-**Relay + exit** — for family inside a filtered country whose devices you can't keep reconfiguring. Devices talk WireGuard to a cheap server *inside* the country; that relay carries one disguised connection across the border. When the exit gets banned you replace it in fifteen minutes and nobody at home touches their phone.
+**`relay`** — for a household inside a filtered country whose devices you can't keep reconfiguring, or whose mobile networks only let whitelisted traffic through. Devices talk WireGuard to a cheap server *inside* the country; that relay carries one disguised connection across the border. When the exit gets banned you replace it in fifteen minutes and nobody at home touches their phone.
 
 ```
 devices ──WireGuard──▶ relay (home country) ──VLESS+XHTTP+REALITY──▶ exit (abroad) ──▶ internet
                               └──────▶ direct (automatic fallback)
 ```
 
-Claude picks the layout from one plain-language question ("who will use this and where are they?"). You don't need to know what any of the above means.
+Both profiles end at the same installers with different parameters; the table in [`SKILL.md`](SKILL.md) lists exactly what differs. The provider is a parameter of each server, not of the profile — [`references/providers/`](references/providers/) has one dated file per provider.
 
 ---
 
-## Install
+## Requirements
 
-**Claude Code** (terminal):
+Whichever way you run it, two things are yours to bring: **a hosting account with a payment method the provider accepts**, and **a domain** — any cheap, neutral name. Python 3 must exist wherever Claude runs the scripts; they are standard library only, including the X25519 key generation.
+
+*Where* you run the skill decides how much of the work Claude can do by itself:
+
+| You run the skill in | What Claude does | What you do |
+|---|---|---|
+| **Claude Code** on a laptop with SSH — the recommended way | Everything: creates the server, sets DNS, installs, verifies, fixes, writes the handout. | Create the hosting account, add the card, buy the domain, paste one token. |
+| **claude.ai** (a paid plan with code execution on; the skill uploaded as a zip) | Guidance plus file generation: it makes the keys and the installers, explains every step, reads back the output you paste. **It cannot connect to your server or to the hosting API** — the sandbox has no network to them. It says so at the start; if it seems to hang waiting for a connection, that is the sandbox, not a bug. | Everything that needs a connection: create the server in the provider's console with the installer pasted in, run the two SSH lines it gives you, check DNS at dnschecker.org. |
+| **Cowork** (the desktop app) | **Untested.** It should behave like Claude Code when it has a terminal with network access; nobody has run a full setup through it yet. If you do, open an issue and say how it went. | |
+| **None of the above** | The hosted agent does the same setup in a chat, for one price — [burrow site](https://antongavrilov88.github.io/burrow/). | Account, card, invite. |
+
+---
+
+## Quick start
+
+**Claude Code — copy the skill:**
 
 ```bash
 git clone https://github.com/antongavrilov88/burrow ~/.claude/skills/burrow
 ```
 
-Then in any Claude Code session: *"set up my own VPN"*, *"подними мне VPN"*, or `/burrow`.
+**Claude Code — or install it as a plugin** (updates with `/plugin update burrow`):
 
-**Claude.ai / desktop app:** download this repo as a ZIP, then Settings → Capabilities → Skills → upload. Works best from the desktop app (Cowork), which can run the scripts and talk to your server for you.
+```
+/plugin marketplace add antongavrilov88/burrow
+/plugin install burrow@burrow
+```
 
-Requires Python 3 on the machine where Claude runs the skill. No other dependencies — the scripts are pure standard library, including the X25519 key generation.
+Then, in any session: *"set up my own VPN"*, *"VPN for my parents"*, *"подними мне VPN"*, or `/burrow` (`/burrow:burrow` when installed as a plugin).
+
+**claude.ai:** download `burrow-skill.zip` from the [latest release](https://github.com/antongavrilov88/burrow/releases), then Settings → Capabilities → Skills → Upload skill. Start a chat and say what you want. Read the claude.ai row in the table above first: Claude will explain each step and you will run the commands.
 
 ---
 
@@ -60,14 +82,14 @@ Requires Python 3 on the machine where Claude runs the skill. No other dependenc
 
 The skill does everything it technically can. These four things it can't, because they need your card, your email or your phone in hand — and by design Burrow never does them for you:
 
-1. **Create a hosting account** and attach a payment method. Written for DigitalOcean (`$6/month`, 1 TB traffic), and any Ubuntu 24.04 VPS works — Hetzner, Vultr, and others.
+1. **Create a hosting account** and attach a payment method. DigitalOcean (`$6/month`, 1 TB traffic) is the automated path; any Ubuntu 24.04 VPS works with a few more clicks on your side — [Hetzner](references/providers/hetzner.md), [Vultr](references/providers/vultr.md), [anything else](references/providers/generic-ubuntu.md). No card that works? [`references/provisioning.md`](references/provisioning.md) has a dated list of hosts that take crypto or regional cards.
 2. **Give Claude an API token** for that account (so it can create the server instead of dictating twenty clicks), and revoke it afterwards. The skill reminds you.
 3. **Buy a domain** — any cheap, neutral name you don't care about. It is the cover story, and a domain can get banned along with the IP.
 4. **Point the domain** at the server: either delegate it to DigitalOcean nameservers or add three A-records by hand. Step-by-step instructions for the common registrars are built in.
 
-For the relay layout you also rent a small VPS in the home country and paste one command into a terminal; the skill walks you through that too, including "the password won't show while you type".
+For the `relay` profile you also rent a small VPS in the home country and paste one command into a terminal; the skill walks you through that too, including "the password won't show while you type".
 
-Budget: about **$6–7/month** for the single layout, plus a domain (~$10/year); the relay adds a ~$4–8/month VPS.
+Budget: about **$6–7/month** for `single`, plus a domain (~$10/year); `relay` adds a ~$4–8/month VPS.
 
 ---
 
@@ -83,7 +105,7 @@ Everything is installed by a self-contained `setup-exit.sh` / `setup-relay.sh` t
 | `nginx` on `:80` and `127.0.0.1:8443` | Let's Encrypt challenges, HTTPS redirect, the cover site that REALITY hands to probes |
 | `certbot` + renewal timer | Real certificates for your domain and the `push.` subdomain |
 | `ntfy` (optional, own domain) | Self-hosted push notifications with per-user access control |
-| `nftables` | Default-deny inbound; opens 22, 80, 443 (+ WireGuard ports in single layout) |
+| `nftables` | Default-deny inbound; opens 22, 80, 443 (+ WireGuard ports in the `single` profile) |
 | `/var/www/<domain>/` | A generic self-hosting-notes site as cover. **Rewrite it** — the same template on many domains becomes a fingerprint |
 | `/root/vpn-kit/exit-summary.txt` | The connection parameters, mode 600 |
 
@@ -101,6 +123,8 @@ Everything is installed by a self-contained `setup-exit.sh` / `setup-relay.sh` t
 
 Config lives in `/etc/vpn-monitor/` and `/etc/wireguard/`; state in `/var/lib/vpn-monitor/`. Nothing phones home to anyone but your own ntfy.
 
+**Languages.** The skill talks to you in whatever language you write in, and the handout comes in that language. The web panel and the push notifications are in Russian in this version — the files that land on the server are frozen while the installers stay byte-identical to the tested ones. The skill tells you this before the first device, and the handout lists what each button and each notification means.
+
 ### Privacy, stated plainly
 
 Collected: byte counters and last-handshake time per device. That's it. Not collected: domains, destination IPs, DNS queries, content. Xray access logs are disabled on both machines; the panel listens only on the VPN interface and localhost. You'll see that your mother's phone used 2 GB and you will not see what she watched — even if you wanted to, the data isn't there.
@@ -109,7 +133,7 @@ Collected: byte counters and last-handshake time per device. That's it. Not coll
 
 ## Why REALITY and not plain WireGuard across the border
 
-Modern DPI doesn't decrypt; it classifies. Bare WireGuard has a recognizable first packet, an odd TLS fingerprint (UDP on 443), no answer when probed, and a constant symmetric UDP stream to a foreign datacenter — four tells. REALITY + XHTTP answers each one: the wire looks like TLS 1.3, uTLS mimics Chrome, a probe gets a real site with a valid certificate, and XHTTP multiplexes everything into one or two long padded HTTP/2 connections. The residual tell is the destination itself — a foreign host — which is why the relay layout exists.
+Modern DPI doesn't decrypt; it classifies. Bare WireGuard has a recognizable first packet, an odd TLS fingerprint (UDP on 443), no answer when probed, and a constant symmetric UDP stream to a foreign datacenter — four tells. REALITY + XHTTP answers each one: the wire looks like TLS 1.3, uTLS mimics Chrome, a probe gets a real site with a valid certificate, and XHTTP multiplexes everything into one or two long padded HTTP/2 connections. The residual tell is the destination itself — a foreign host — which is why the `relay` profile exists.
 
 Why your **own** domain instead of borrowing a big-brand SNI: with a borrowed name the network owner, IP and SNI don't match, active probing sees that, and Xray's own docs warn that impersonating Apple or Microsoft gets your IP banned. With your domain on your server, the probe gets the real site, because it is the real site.
 
@@ -122,9 +146,12 @@ More in [`references/architecture.md`](references/architecture.md) — including
 ```
 SKILL.md                     the skill itself — how Claude runs the setup, step by step
 references/
-  human-steps.md             every manual step, with the exact words to say to a non-technical person
+  human-steps.md             every manual step: what has to happen and what Claude verifies
+  lang/en.md, lang/ru.md     the words for every human-facing moment, per language (ru is the tested wording)
+  lang/handout-en.md, -ru.md handout templates
+  providers/*.md             one dated file per hosting provider: layer, automation, payment, click paths
+  provisioning.md            provider index, "no card that works?", delivering installers, DNS
   architecture.md            how it works and why; alternatives rejected; risks
-  provisioning.md            where to get machines, delivering installers, DNS
   operations.md              daily commands, replacing a banned exit, drills
   troubleshooting.md         top-down failure diagnosis
 scripts/
@@ -132,13 +159,13 @@ scripts/
   build-installers.py        packs payload + params into self-contained setup-*.sh
   provision-do.py            DigitalOcean: check, keys, create, DNS, list, destroy
   client-link.py             vless:// link for Hiddify / v2rayNG
-  make-handout.py            plain-language handout for the end user
+  make-handout.py            the Russian handout (tested wording)
   payload/                   what actually lands on the servers (see table above)
+skills/burrow/SKILL.md       the plugin entry point: points at the root SKILL.md
+.claude-plugin/              marketplace.json and plugin.json for /plugin install
 ```
 
 Internally the scripts still call themselves `vpn-kit` (`/opt/vpn-kit`, `/root/vpn-kit`) — that's the working name it shipped under; it's not being renamed on the server side to keep tested installers byte-identical.
-
-The skill's instructions are written in Russian, because that is who it was built for first. Claude follows them in whatever language you speak to it.
 
 ---
 

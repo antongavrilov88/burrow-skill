@@ -1,124 +1,129 @@
-# Как устроено и почему именно так
+# How it is built and why
 
-## Схема A: две машины
+## The `relay` profile: two machines
 
 ```
-устройства (WireGuard) ──► релей внутри страны ──VLESS+XHTTP+REALITY──► выход за границей ──► интернет
-                                   └──────────► прямой выход с релея (запасной путь)
+devices (WireGuard) ──► relay inside the home country ──VLESS+XHTTP+REALITY──► exit abroad ──► internet
+                                   └──────────► direct route out of the relay (the fallback)
 ```
 
-- **Первое плечо** — обычный WireGuard, целиком внутри страны. Не меняется никогда:
-  любая правка означает поход к каждому устройству.
-- **Второе плечо** — VLESS + XHTTP + REALITY на Xray, порт 443/tcp. Именно оно
-  ломается при закручивании гаек, и именно его можно чинить и переставлять,
-  не трогая людей.
-- **Кто идёт через туннель** — набор `proxied_src` в nftables на релее.
-  Пусто = все идут напрямую. Переключение мгновенное, из панели или командой.
-- **Разделение**: домены из списка исключений и, если задан `home_geoip`,
-  адреса домашней страны уходят прямо с релея. Остальное — в туннель.
+- **The first leg** is plain WireGuard, entirely inside the home country. It never
+  changes: any edit means a visit to every device.
+- **The second leg** is VLESS + XHTTP + REALITY on Xray, port 443/tcp. This is the
+  leg that breaks when the screws get tightened, and it is the leg you can repair
+  and rebuild without anyone having to touch their devices.
+- **Who goes through the tunnel** is decided by the `proxied_src` set in nftables on
+  the relay. Empty = everyone goes direct. Switching is instant, from the panel or
+  with a command.
+- **Split routing**: domains from the direct-domain list and, if `home_geoip` is set,
+  home-country addresses leave straight from the relay. Everything else goes into
+  the tunnel.
 
-## Почему REALITY, а не просто WireGuard наружу
+## Why REALITY and not just WireGuard out
 
-Современный DPI принимает решение по совокупности признаков, не расшифровывая
-поток. Что мы противопоставляем каждому:
+Modern DPI makes its decision on a combination of signals without decrypting the
+stream. Here is what we set against each one:
 
-| Признак | Почему ловится голый WireGuard | Что делает эта схема |
+| Signal | Why bare WireGuard gets caught | What this design does |
 |---|---|---|
-| Форма пакетов | фиксированный заголовок, опознаётся с первого пакета | снаружи обычный TLS 1.3 |
-| Отпечаток TLS (JA3/JA4) | UDP на 443 сам по себе аномалия | uTLS подделывает Chrome целиком |
-| Активное зондирование | стучатся на порт, ответа нет → VPN | self-steal: пробер получает настоящий сайт с валидным сертификатом |
-| Поведение потока | постоянный симметричный UDP к зарубежному ДЦ | XHTTP мультиплексирует в 1–2 длинных H2-соединения с паддингом |
-| Адрес назначения | зарубежный хостинг = повод для проверки | **не выигрываем** — это главный остаточный риск |
+| Packet shape | fixed header, recognized from the first packet | from the outside it is ordinary TLS 1.3 |
+| TLS fingerprint (JA3/JA4) | UDP on 443 is an anomaly in itself | uTLS impersonates Chrome completely |
+| Active probing | they knock on the port, get no answer → VPN | self-steal: the prober gets a real site with a valid certificate |
+| Flow behavior | constant symmetric UDP to a foreign data center | XHTTP multiplexes into 1–2 long H2 connections with padding |
+| Destination address | foreign hosting = a reason for a closer look | **we do not win this one** — it is the main residual risk |
 
-**Почему XHTTP, а не классический REALITY+Vision.** Vision открывает отдельную
-TLS-сессию на каждое клиентское соединение. Для релея, за которым несколько
-человек, это пачка одновременных рукопожатий к одному SNI — ровно тот шаблон,
-на который DPI отвечает заморозкой соединения на пару минут. XHTTP держит
-одно-два длинных соединения и такого шаблона не создаёт.
+**Why XHTTP and not classic REALITY+Vision.** Vision opens a separate TLS session
+for every client connection. For a relay with several people behind it, that is a
+burst of simultaneous handshakes to the same SNI — exactly the pattern DPI answers
+with a throttling freeze of the connection for a couple of minutes. XHTTP keeps
+one or two long connections and never produces that pattern.
 
-**Почему свой домен (self-steal), а не чужой SNI.** При маскировке под чужой сайт
-не совпадают владелец сети, IP и SNI, и активное зондирование это видит. Xray
-прямо предупреждает, что маскировка под Apple/Microsoft ведёт к бану IP.
-Со своим доменом на своей же машине пробер получает настоящий сайт — потому что
-это и есть настоящий сайт.
+**Why our own domain (self-steal) and not someone else's SNI.** When you disguise
+yourself as someone else's site, the network owner, the IP and the SNI do not match,
+and active probing sees that. Xray warns outright that impersonating Apple/Microsoft
+leads to the IP getting blocked. With our own domain on our own machine, the prober
+gets a real site — because it is a real site.
 
-## Зачем нужен релей — и когда без него можно
+## Why the relay exists — and when you can do without it
 
-Технически устройства могут ходить прямо на выходную машину по VLESS+REALITY.
-Что теряется без релея:
+Technically, devices can talk straight to the exit, the server abroad, over
+VLESS+REALITY. What you lose without the relay:
 
-1. Домашний провайдер каждого пользователя начинает видеть круглосуточную
-   TLS-сессию с зарубежным дата-центром вместо соединения с местным облаком.
-   Это ровно тот признак, по которому DPI отбирает кандидатов на проверку.
-2. Управление. Смена выхода, маршрута, откат — сейчас одна команда на одной
-   машине. Без релея — поход к каждому пользователю.
-3. Панель, автооткат, разделение маршрутов живут на релее.
-4. При переходе к белым спискам адрес местного облака скорее останется
-   разрешённым, чем зарубежный.
+1. Every user's home ISP starts seeing a round-the-clock TLS session to a foreign
+   data center instead of a connection to a local cloud. That is exactly the signal
+   DPI uses to pick candidates for a closer look.
+2. Control. Changing the exit, changing the route, failing over — today that is one
+   command on one machine. Without the relay it is a visit to every user.
+3. The panel, automatic failover and split routing all live on the relay.
+4. If things move to allowlists, a local cloud address is more likely to stay
+   permitted than a foreign one.
 
-Что приобретается: минус 30–50 мс, минус плата за исходящий трафик релея,
-минус машина, минус зависимость от провайдера, который юридически обязан
-фильтровать по указанию.
+What you gain: 30–50 ms less latency, no bill for the relay's outbound traffic,
+one machine fewer, and no dependence on a provider that is legally required to
+filter when ordered to.
 
-**Вывод:** если пользователи внутри РФ и менять настройки на их устройствах
-дорого — релей нужен. Если человек настраивает VPN сам себе и готов раз в
-полгода переставить конфиг — схема B честнее по деньгам.
+**Bottom line:** if the users are inside the filtered country and changing settings
+on their devices is expensive, you need the relay. If the person is setting up a
+VPN for themselves and is willing to reinstall a config once every six months, the
+`single` profile is the more honest choice money-wise.
 
-## Схема B: одна машина
+## The `single` profile: one machine
 
 ```
-устройства ──WireGuard──► выходная машина ──► интернет
-устройства ──VLESS+REALITY──┘  (для приложений Hiddify/v2rayNG)
+devices ──WireGuard──► the exit ──► internet
+devices ──VLESS+REALITY──┘  (for the Hiddify / v2rayNG apps)
 ```
 
-WireGuard — для устройств, куда нельзя поставить клиент Xray (телевизоры,
-роутеры, старые планшеты) и для тех, кто вне зоны блокировок. REALITY — для
-телефонов и ноутбуков внутри РФ. Панель показывает WireGuard-клиентов;
-REALITY-клиенты выдаются ссылкой `vless://` и в панели не видны.
+WireGuard is for devices that cannot run an Xray client (TVs, routers, old
+tablets) and for people outside the filtered zone. REALITY is for phones and
+laptops inside the filtered country. The panel shows WireGuard clients; REALITY
+clients are issued as a `vless://` link and do not appear in the panel.
 
-Автооткат в этой схеме невозможен — переключаться некуда. Сторож всё равно
-работает: пробует канал, перезапускает Xray, шлёт уведомление.
+Automatic failover is impossible in this profile — there is nowhere to switch to.
+The watchdog still runs: it probes the channel, restarts Xray and sends a
+notification.
 
-## Что рассматривали и отклонили
+## What we considered and rejected
 
-- **Vision вместо XHTTP** — риск двухминутных заморозок на релее с несколькими
-  пользователями.
-- **Чужой SNI** — предупреждение самого Xray о бане IP.
-- **Прямой VLESS для всех вместо WireGuard на первом плече** — ломает и
-  незаметность, и управляемость (см. выше).
-- **Сайт-визитка с выдуманной компанией и отзывами** — плохое прикрытие
-  (пустая страница-заглушка выглядит подозрительнее живого сайта) и просто
-  нечестно. Прикрытие должно быть настоящим и своим.
-- **Личный сайт человека на этом же домене** — связывает его имя с адресом,
-  через который идёт VPN-трафик, и падает вместе с ним при бане.
+- **Vision instead of XHTTP** — the risk of two-minute throttling freezes on a relay
+  with several users.
+- **Someone else's SNI** — Xray's own warning about the IP getting blocked.
+- **Direct VLESS for everyone instead of WireGuard on the first leg** — breaks both
+  stealth and manageability (see above).
+- **A brochure site for a made-up company with testimonials** — poor cover (a blank
+  placeholder page looks more suspicious than a live site) and simply dishonest.
+  The cover must be real and our own.
+- **The person's personal site on the same domain** — ties their name to the address
+  the VPN traffic goes through, and goes down with it when the IP gets blocked.
 
-## Пределы и деньги
+## Limits and money
 
-- **Трафик** — главный потолок. Дроплет DigitalOcean за $6 даёт 1 ТБ/мес.
-  Реальное потребление семьи из нескольких человек — порядка 10–15 ГБ/сутки,
-  то есть 300–450 ГБ. Вывод: **10–15 обычных устройств** или 4–5 активных
-  зрителей HD. Лечится дроплетом за $12 (2 ТБ), а не переделкой схемы.
-- **Процессор** упирается примерно в гигабит — то есть не упирается.
-- **Исходящий трафик релея** оплачивается отдельно по тарифам его провайдера.
-  Разделение маршрутов (домашние домены мимо туннеля) заметно его снижает.
+- **Traffic** is the main ceiling. A $6 DigitalOcean droplet comes with 1 TB/month.
+  Real consumption for a family of several people is on the order of 10–15 GB/day,
+  i.e. 300–450 GB. Bottom line: **10–15 ordinary devices** or 4–5 active HD
+  viewers. The cure is the $12 droplet (2 TB), not a redesign.
+- **CPU** tops out at roughly a gigabit — which is to say it does not top out.
+- **The relay's outbound traffic** is billed separately at its provider's rates.
+  Split routing (home-country domains bypassing the tunnel) cuts it noticeably.
 
-## Риски и горизонты
+## Risks and horizons
 
-Инженерная оценка, не статистика.
+An engineering estimate, not statistics.
 
-| Что случится | Насколько вероятно | Как выглядит | Что делать |
+| What happens | How likely | What it looks like | What to do |
 |---|---|---|---|
-| Бан IP выходной машины | высоко, 3–6 мес | у всех встало, но сама машина жива | новая машина + A-записи + адрес в конфиге релея, ~15 минут |
-| Поведенческая заморозка | средне, 6–12 мес | зависания при живом туннеле | подкрутить xmux/паддинг/интервалы XHTTP |
-| Провайдер релея начал фильтровать | средне, 6–12 мес | лёг только туннель, обычный HTTPS до выхода тоже не идёт | перенести релей к другому провайдеру |
-| Белые списки на домашних сетях | средне, ~12 мес | у людей не открывается почти ничего | второе плечо за CDN; первое плечо уже правильное |
-| Научились ловить сам REALITY | низко, в пределах года | массовые жалобы по всей стране | XHTTP через CDN или Hysteria2 |
+| The exit's IP gets blocked | high, 3–6 months | everything stops for everyone, but the machine itself is alive | new machine + A records + the address in the relay config, ~15 minutes |
+| Behavioral throttling freeze | medium, 6–12 months | stalls while the tunnel is alive | tune XHTTP xmux/padding/intervals |
+| The relay's provider starts filtering | medium, 6–12 months | only the tunnel is down, and plain HTTPS to the exit does not get through either | move the relay to another provider |
+| Allowlists on home networks | medium, ~12 months | almost nothing opens for people | second leg behind a CDN; the first leg is already right |
+| They learn to catch REALITY itself | low, within a year | mass complaints across the whole country | XHTTP via a CDN, or Hysteria2 |
 
-## Приватность
+## Privacy
 
-Собираются: счётчики байт и время последнего рукопожатия WireGuard по каждому
-устройству. Всё.
+Collected: byte counters and the time of the last WireGuard handshake, per device.
+That is all.
 
-Не собираются: домены, адреса назначения, DNS-запросы, порты, содержимое.
-Логи доступа Xray выключены на обеих машинах (`"log": {"access": "none"}`).
-Панель слушает только внутренний адрес VPN и localhost — снаружи её нет.
+Not collected: domains, destination addresses, DNS queries, ports, content.
+Xray access logs are off on both machines (`"log": {"access": "none"}`).
+The panel listens only on the VPN's internal address and localhost — it does not
+exist from the outside.

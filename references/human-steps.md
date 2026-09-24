@@ -1,285 +1,142 @@
-# Что человек делает руками — по шагам
+# What the person does by hand
 
-Всё остальное скилл делает сам. Здесь только то, что технически нельзя сделать
-за него: где-то нужна его карта, его почта, его телефон в руках.
+Everything else the skill does itself. This file covers only what technically cannot be done for them: it needs their card, their email, their phone in their hand.
 
-**Как этим пользоваться:** не давай человеку весь файл. Бери один раздел,
-пересказывай своими словами в чат, дожидайся «сделал», иди дальше. Человек,
-который получил простыню из восьми разделов, закроет её и не вернётся.
+**How to use it:** one section at a time. What has to happen and what you verify is here. The words are in `lang/<xx>.md` under the same section number (`ru` is the tested wording; `en` is the source for any other language). The exact buttons of a hosting provider are in `providers/<provider>.md`. Never hand the person the whole file: someone who receives a wall of ten sections closes it and does not come back.
 
-**Тон:** он не обязан знать ни одного из этих слов. Не «сгенерируй токен»,
-а «нужно получить длинный пароль, по которому я смогу от твоего имени создать
-сервер». Не «делегируй домен», а «нужно сказать, что за адрес отвечает
-DigitalOcean». Каждый раз объясняй, **зачем** этот шаг — люди застревают не
-на кнопках, а на «а почему я вообще это делаю».
+**Tone:** they owe you no technical vocabulary. Every step starts with why — `lang/<xx>.md` has the sentence.
 
 ---
 
-## 1. Аккаунт DigitalOcean
+## 1. Hosting account
 
-**Зачем:** там будет жить сервер за границей — компьютер, через который пойдёт
-интернет.
+**Why:** the exit lives there — the computer abroad the internet will go through.
 
-**Скажи так:** «Нам нужен компьютер за границей, который будет работать
-круглосуточно. Арендуем его на DigitalOcean — это как хостинг, только сервер
-целиком. Стоит 6 долларов в месяц.»
+**What happens:** they register with the provider, confirm the email, attach a payment method. Click path and the ~$1 verification hold: `providers/digitalocean.md` (or the file of the provider they chose).
 
-**Шаги:**
+**Where it stalls:** the payment method. Providers refuse cards from some countries; which ones is in the provider file, not in what you say. What usually works: a card from a bank in another country, PayPal on an account outside the country, a virtual card (Wise, Payoneer).
 
-1. Открыть **cloud.digitalocean.com/registrations/new**
-2. Зарегистрироваться: почта и пароль, либо через Google.
-3. Подтвердить почту — придёт письмо со ссылкой.
-4. Привязать способ оплаты. Спишут около **$1 на проверку карты** и вернут.
+**No card that works at all:** say so plainly and pick a provider from "No card that works?" in `provisioning.md`. Then the person creates the machine themselves (Ubuntu 24.04) and gives you access; everything else is the same, minus the automatic creation.
 
-**Здесь чаще всего и застревают.** Российские карты DigitalOcean не принимает.
-Что работает:
+**Never:** suggest an account in someone else's name, or any way around the card check.
 
-- карта иностранного банка (Казахстан, Грузия, Армения, Турция, ОАЭ, ЕС);
-- **PayPal**, привязанный к нероссийскому счёту;
-- виртуальная карта сервисов вроде Wise, Payoneer.
-
-Если карты нет вообще — скажи об этом прямо и предложи выбрать другого
-хостера: подойдут **Hetzner** (дешевле, но строже с проверкой), **Vultr**,
-**Aeza**, **PQ.Hosting** — у последних двух с оплатой из России проще.
-Тогда сервер он создаёт сам (Ubuntu 24.04), а тебе даёт доступ — дальше
-всё то же самое, просто без автоматического создания машины.
-
-**Не предлагай** заводить аккаунт на чужие данные или обходить проверку карты.
+**You verify:** nothing yet — the key check in §2 covers the account.
 
 ---
 
-## 2. Ключ доступа к аккаунту (API-токен)
+## 2. The access key (API token)
 
-**Зачем:** чтобы ты мог создать сервер сам, а не диктовать двадцать шагов.
+**Why:** so that you create the server instead of dictating twenty clicks.
 
-**Скажи так:** «Чтобы я мог всё сделать за тебя, нужен ключ от твоего аккаунта.
-Это длинная строчка. Она даёт полный доступ, поэтому после установки мы её
-сразу отзовём и она станет бесполезной.»
+**What happens:** they generate a token — full access, 30-day expiry — and paste it to you. It is shown once. Buttons: `providers/digitalocean.md`.
 
-**Шаги:**
+**Must be said aloud:** the key passes through the conversation; you revoke it together at the end (`lang/<xx>.md` §2).
 
-1. Зайти на **cloud.digitalocean.com**
-2. Слева внизу — **API**
-3. Вкладка **Tokens**, кнопка **Generate New Token**
-4. Name: `vpn` (любое)
-5. Expiration: **30 days**
-6. Scopes: выбрать **Full Access**
-7. **Generate Token**
-8. Строчка вида `dop_v1_...` показывается **один раз**. Скопировать целиком
-   и прислать сюда.
+**You verify, immediately:** `python3 scripts/provision-do.py check`. "Not active" → the card is not attached → back to §1, in words, no machine creation.
 
-**Обязательно скажи вслух:** «Эта строчка пройдёт через нашу переписку.
-Когда закончим, мы её отзовём и выпустим при необходимости новую — тогда
-даже если переписка куда-то утечёт, ключ уже мёртвый.»
+**Revoking:** API → Tokens → three dots → Delete. Remind at goodbye and again in §10.
 
-**Как отозвать потом:** та же страница API → Tokens → три точки напротив
-токена → **Delete**.
+**Other providers:** there is no key. Skip to SSH access (§7) once they have created the machine.
 
 ---
 
-## 3. Домен
+## 3. Domain
 
-**Зачем:** главная маскировка. Снаружи всё выглядит как обычные заходы на
-обычный сайт, потому что по этому адресу и правда стоит настоящий сайт.
+**Why:** the main disguise — a real website really answers at the address.
 
-**Скажи так:** «Нужен свой адрес в интернете, как `ivanov-notes.com`. Стоит
-около тысячи рублей в год. Он нужен для маскировки: тому, кто смотрит со
-стороны, будет видно, что ты просто заходишь на какой-то сайт.»
+**What happens:** they buy any free, neutral name at a registrar: Namecheap, Porkbun, Cloudflare, or one they already use (a registrar in their own country is fine — the domain's registrar does not have to be abroad). `.com` `.net` `.org` `.me` are fine; `.xyz` `.top` `.click` get blocked in bulk — steer away from them.
 
-**Где купить:**
+**If they already own one:** do not send them shopping. Ask one thing — does anything live on it, a website or email? — and deliver the warning below anyway. If something does live there, it is the wrong domain for this.
 
-- **Namecheap**, **Porkbun**, **Cloudflare** — дешевле, оплата картой;
-- **reg.ru**, **timeweb** — российские, платить проще, интерфейс на русском.
+**The warning to deliver in full** (`lang/<xx>.md` §3): not a domain they care about; not one that already carries their site or their email; the server's address gets blocked from time to time and the domain carries that history; a blocked domain takes everything on it down.
 
-**Что брать:** любое свободное имя. Зона `.com`, `.net`, `.org`, `.me` — годится.
-Дешёвые `.xyz`, `.top`, `.click` брать **не стоит**: их часто блокируют пачками.
-
-**Важно предупредить, и не мимоходом:**
-
-> Не бери домен, который тебе дорог, и не используй тот, где уже стоит твой
-> сайт или почта. Причина: примерно раз в полгода адрес сервера могут
-> заблокировать, тогда мы меняем машину — а домен остаётся связан с этой
-> историей. И если однажды заблокируют сам домен, вместе с ним ляжет всё,
-> что на нём висит.
-
-Годится что-то нейтральное и своё: заметки, пет-проект, фотоархив.
+**You verify:** nothing until DNS (§4/§5).
 
 ---
 
-## 4. Направить домен на DigitalOcean
+## 4. Pointing the domain at the provider's DNS
 
-**Зачем:** чтобы дальше все настройки адреса ты делал сам, без него.
+**Why:** so that from then on you manage the records yourself, without them.
 
-**Скажи так:** «Осталось сказать, что за твой адрес отвечает DigitalOcean.
-Одна настройка у того, где покупал домен, — и дальше я всё сделаю сам.»
+**What happens:** at the registrar they switch to custom nameservers: `ns1.digitalocean.com`, `ns2.digitalocean.com`, `ns3.digitalocean.com`. Where the setting hides: Namecheap — **Domain** tab → **Nameservers** → **Custom DNS**; Porkbun — **Authoritative Nameservers**; most others — a menu called **Nameservers** / **DNS servers**. A domain registered with Cloudflare cannot change nameservers at all — go to §5.
 
-**Шаги (общие для всех регистраторов):**
+**What to expect:** fifteen minutes to a few hours, rarely a day. Nothing to re-click. Until then `ns-check` still answers "elsewhere" (exit 2) — that is not a reason to fall back to §5; re-run it.
 
-1. Зайти туда, где куплен домен.
-2. Найти домен в списке, открыть его.
-3. Найти пункт **DNS-серверы** / **Nameservers** / **NS-серверы**
-   (у reg.ru — «DNS-серверы и управление зоной»; у Namecheap — вкладка
-   **Domain**, поле **Nameservers**; у Porkbun — **Authoritative Nameservers**).
-4. Выбрать «свои» / **Custom DNS** / «Указать свои DNS-серверы».
-5. Вписать три штуки:
+**You verify:** `python3 scripts/provision-do.py ns-check --domain <domain>` — exit 0: at DigitalOcean, set the records yourself; 2: elsewhere → §5; 3: no DNS from where you run → ask them to look up the NS record at dnschecker.org and read it to you.
 
-   ```
-   ns1.digitalocean.com
-   ns2.digitalocean.com
-   ns3.digitalocean.com
-   ```
-
-6. Сохранить.
-
-**Скажи, чего ждать:** «Обновляется от пятнадцати минут до нескольких часов,
-изредка до суток. Это нормально, ничего перенажимать не надо — я буду
-проверять сам и скажу, когда готово.»
-
-Проверять: `python3 scripts/provision-do.py ns-check --domain <домен>`.
-
-**Если он не хочет менять NS** (например, на домене уже висит почта) —
-не настаивай. Тогда он ставит три записи руками, см. следующий раздел.
+**If they would rather not move the nameservers** (email on the domain, say): do not insist. §5.
 
 ---
 
-## 5. Три записи вручную — только если NS оставили у регистратора
+## 5. Three records by hand — only when the nameservers stay at the registrar
 
-**Скажи так:** «Нужно добавить три строчки в настройках домена. Все три
-одинаковые, отличается только первое поле.»
+**What happens:** in the registrar's **DNS records** / **Zone** section they add three records:
 
-Раздел называется **DNS-записи** / **DNS Records** / «Управление зоной».
-Добавить три записи:
-
-| Тип | Имя (Host) | Значение (Value) | TTL |
+| Type | Name (Host) | Value | TTL |
 |---|---|---|---|
-| A | `@` | `<адрес сервера>` | 300 |
-| A | `www` | `<адрес сервера>` | 300 |
-| A | `push` | `<адрес сервера>` | 300 |
+| A | `@` | `<exit IP>` | 300 |
+| A | `www` | `<exit IP>` | 300 |
+| A | `push` | `<exit IP>` | 300 |
 
-Пояснения, которые стоит дать сразу, потому что на них спотыкаются все:
+**The pitfalls to pre-empt** (`lang/<xx>.md` §5): `@` vs. an empty field vs. the full domain; TTL is optional; type A only — not AAAA, not CNAME.
 
-- **`@`** означает «сам домен без приставок». В некоторых панелях вместо `@`
-  надо оставить поле **пустым** или вписать сам домен целиком.
-- **TTL 300** — это «пять минут». Чем меньше, тем быстрее подхватываются
-  изменения. Если поля TTL нет — не страшно, пропустить.
-- Тип именно **A**, не AAAA, не CNAME.
-
-Проверять: `provision-do.py dns-check --domain <домен> --ip <адрес>`.
+**You verify:** `python3 scripts/provision-do.py dns-check --domain <domain> --ip <IP>` — yourself, every few minutes, and tell them when it is through. Certificates follow by themselves once the records resolve.
 
 ---
 
-## 6. Сервер в России — только для схемы с двумя машинами
+## 6. [relay] The server in the users' country
 
-**Зачем:** чтобы домашний интернет-провайдер видел скучное соединение с
-российским адресом, а не круглосуточную связь с заграницей.
+**Why:** their home ISP sees a dull connection to a domestic address instead of a round-the-clock link abroad; and a domestic address is the one that has a chance on an allow-list-only network.
 
-**Скажи так:** «Нужен ещё один компьютер, но уже в России. Через него будут
-подключаться устройства. Он дешёвый — рублей 300–600 в месяц — и оплачивается
-обычной российской картой.»
+**What happens:** they order the cheapest Ubuntu 24.04 VPS with a dedicated IPv4 at a provider in that country — `providers/yandex-cloud.md`, `providers/generic-ubuntu.md`. Check the traffic quota (everything passes twice) and that it is a different provider from the exit's.
 
-**Где брать:** Timeweb Cloud, Selectel, Beget, aeza, RuVDS. Любой VPS.
+**What you need from them:** the address, the login (root, or a user with passwordless sudo) and the password or key — providers email these right after payment.
 
-**Что заказывать:**
+**Say it straight** (`lang/<xx>.md` §6): the password passes through the chat; after the install you show them how to change it (`passwd`, one command).
 
-- операционная система **Ubuntu 24.04**;
-- минимум: 1 процессор, 1 ГБ памяти, 10 ГБ диска — самый дешёвый тариф;
-- обязательно **свой IPv4-адрес** (обычно включён; если предлагают «без
-  выделенного IP» — не брать);
-- посмотреть **лимит трафика**: через эту машину пройдёт весь трафик дважды.
-  Безлимит или от 1 ТБ.
-
-**Что нужно от него после заказа:** адрес сервера, логин (обычно `root`)
-и пароль — их присылают на почту сразу после оплаты.
-
-**Скажи прямо:** «Пароль от этого сервера тоже пройдёт через переписку.
-После установки я покажу, как его сменить, — это одна команда.»
+**You verify:** `ssh` in; `lsb_release -a` says 24.04; `curl -4 https://api.ipify.org` prints the address they gave you.
 
 ---
 
-## 7. Запустить одну команду на сервере
+## 7. Running one command on the server
 
-Нужно, только если у тебя нет прямого доступа к серверу.
+Only when you have no SSH access from where you run.
 
-**Скажи так:** «Сейчас пришлю файл и две строчки. Нужно открыть на компьютере
-одну программу и вставить их туда. Это займёт минуту, а дальше сервер настроит
-себя сам минут за десять.»
+**What happens:** you send `setup-exit.sh` or `setup-relay.sh` (SendUserFile) and two lines; they open a terminal and paste. The three things that confuse everyone — the invisible password, the `yes/no` question, the password asked twice — are scripted in `lang/<xx>.md` §7, together with how to open a terminal on Mac, Windows and Linux and the PowerShell paste quirk.
 
-**Как открыть терминал:**
-
-- **Mac:** Cmd+Пробел → набрать `Терминал` → Enter.
-- **Windows 10/11:** кнопка Пуск → набрать `PowerShell` → Enter.
-- **Linux:** Ctrl+Alt+T.
-
-**Что вставить** (подставь настоящий адрес; файл он уже скачал):
+**The lines** (substitute the real address; `sudo bash` instead of `bash` when the login is not root):
 
 ```bash
-scp ~/Downloads/setup-relay.sh root@АДРЕС:/root/
-ssh root@АДРЕС 'bash /root/setup-relay.sh'
+scp ~/Downloads/setup-relay.sh root@ADDRESS:/root/
+ssh root@ADDRESS 'bash /root/setup-relay.sh'
 ```
 
-Предупреди о трёх вещах, иначе он растеряется:
-
-1. **Первая команда спросит пароль от сервера.** Пароль **не отображается
-   при вводе** — ни точек, ни звёздочек. Так и должно быть: вставить или
-   напечатать вслепую и нажать Enter.
-2. **Может спросить `Are you sure you want to continue connecting (yes/no)?`** —
-   напечатать `yes` и Enter. Это бывает один раз.
-3. **Пароль спросят дважды** — второй раз для второй команды.
-
-Дальше побегут строчки — это нормально, ждать. Попроси прислать **последние
-двадцать строк**: по ним видно, получилось или нет.
-
-**Если вставить не получается:** в Windows PowerShell вставка — правая кнопка
-мыши, не Ctrl+V. На Mac — Cmd+V как обычно.
+**You verify:** ask for the last twenty lines. The installers print in Russian: `=== ВЫХОДНАЯ МАШИНА ГОТОВА ===` (exit ready) or `=== РЕЛЕЙ ГОТОВ ===` (relay ready) followed by the service list and, on the relay, `туннель работает` (tunnel works) with the exit's IP. Anything else → `troubleshooting.md`. Then `bash /usr/local/sbin/vpn-verify.sh` through them or over SSH.
 
 ---
 
-## 8. Приложение на устройства
+## 8. The app on the devices
 
-**Скажи так:** «Ставим приложение WireGuard — оно бесплатное и официальное.
-Дальше сканируешь картинку с кодом, и всё.»
+**What happens:** the official WireGuard app — App Store / Google Play / Mac App Store / `wireguard.com/install` for Windows. In the app: **+** → **Create from QR code** → scan the code the panel shows → name → save → switch on. On a computer: download the `.conf` from the panel → **Import tunnel(s) from file**. The phone asks once whether to allow the VPN configuration: yes.
 
-- **iPhone/iPad:** App Store → `WireGuard` → установить.
-- **Android:** Google Play → `WireGuard` → установить.
-- **Mac:** App Store → `WireGuard`.
-- **Windows:** сайт **wireguard.com/install** → Windows Installer.
+**The first device** cannot come from the panel — the panel is reachable only from inside the VPN. You issue it from the server's shell (`operations.md`, "Issue a device from the shell") and send the QR image as a file; the person scans it from the screen. Every later device: the person, in the panel, from a device that is already connected. People who are not in the room get a screenshot of the QR or the `.conf` over a messenger; the message is deleted once scanned.
 
-**Как добавить подключение:**
+**The panel:** opened from a device that is already on the VPN, at `http://<wg_subnet>.1:<dashboard_port>` (default `http://10.67.0.1:8088`); the admin code is asked once per browser. **Its labels are Russian** — the glossary is in `lang/<xx>.md`; for a person who does not read Russian, say so once before this step.
 
-1. В приложении нажать **+**
-2. Выбрать **Создать из QR-кода** (Create from QR code / Scan from QR code)
-3. Навести камеру на код, который показала панель.
-4. Дать имя, сохранить, включить переключатель.
+**[relay] Order:** the first device is a phone on mobile data with Wi-Fi off → "does youtube open?" → switch the bypass on for that device → the same question → only then QR codes for everyone else. Phones on strict operators: port 443. The two warnings (high UDP ports; what failover looks like) are in `lang/<xx>.md` §8.
 
-На компьютере вместо QR: панель даёт скачать файл `.conf`, в приложении —
-**Import tunnel(s) from file**.
-
-**Что сказать про «доверять этому VPN»:** телефон один раз спросит разрешение
-на настройку VPN. Это обычный системный вопрос, надо согласиться.
+**You verify:** "does youtube open?" from them; `sudo wg show wg-clients` on the server shows a fresh handshake for the new peer. [relay] After the bypass: the device's address is in the `proxied_src` set and the panel shows it as «туннель».
 
 ---
 
-## 9. Уведомления на телефон
+## 9. Notifications
 
-**Скажи так:** «Если что-то сломается, ты узнаешь об этом первым, а не от
-родителей. Ставится за минуту.»
+**What happens:** the **ntfy** app → **+** → **Subscribe to topic** → **Use another server** on → `https://push.<domain>` → topic, login, password from `params.json` (`ntfy_topic`, `ntfy_user`, `ntfy_pass`).
 
-1. App Store / Google Play → **ntfy** → установить.
-2. Нажать **+** → **Subscribe to topic**
-3. Включить **Use another server**, вписать адрес (дашь ему готовый).
-4. Вписать имя темы, логин и пароль (дашь готовые).
-
-Пусть сразу проверит, что доходит: сделай тестовое уведомление с сервера
-и спроси, пришло ли.
+**You verify:** send a test from the server (the one-liner in `operations.md`) and ask whether it arrived. If the self-hosted ntfy did not come up, the public fallback topic on ntfy.sh still works (`ntfy_public_topic`); say which one they are subscribed to.
 
 ---
 
-## 10. Убрать за собой
+## 10. Cleaning up
 
-Через день-два после установки напомни, одним сообщением:
-
-- **отозвать ключ доступа** (раздел 2, «как отозвать потом»);
-- **удалить из переписки** пароль от сервера и ключ, если пересылал;
-- **сохранить файл `params.json`** в надёжное место — в менеджер паролей
-  или в облако. Там ключи, без которых чинить будет заметно сложнее;
-- **поставить в календарь напоминание за месяц до продления домена.**
+A day or two after the install, one message (`lang/<xx>.md` §10): revoke the access key (§2); delete the server password and the key from the conversation; store `params.json` in a password manager or a cloud drive; a calendar reminder a month before the domain renewal.
