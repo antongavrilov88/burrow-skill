@@ -62,19 +62,19 @@ Whichever way you run it, two things are yours to bring: **a hosting account wit
 **Claude Code — copy the skill:**
 
 ```bash
-git clone https://github.com/antongavrilov88/burrow ~/.claude/skills/burrow
+git clone https://github.com/antongavrilov88/burrow-skill ~/.claude/skills/burrow
 ```
 
 **Claude Code — or install it as a plugin** (later updates: `/plugin marketplace update burrow`):
 
 ```
-/plugin marketplace add antongavrilov88/burrow
+/plugin marketplace add antongavrilov88/burrow-skill
 /plugin install burrow@burrow
 ```
 
 Then, in any session: *"set up my own VPN"*, *"VPN for my parents"*, *"подними мне VPN"*, or `/burrow` (`/burrow:burrow` when installed as a plugin).
 
-**claude.ai:** download `burrow-skill.zip` from the [latest release](https://github.com/antongavrilov88/burrow/releases), then Settings → Capabilities → Skills → Upload skill. Start a chat and say what you want. Read the claude.ai row in the table above first: Claude will explain each step and you will run the commands.
+**claude.ai:** download `burrow-skill.zip` from the [latest release](https://github.com/antongavrilov88/burrow-skill/releases), then Settings → Capabilities → Skills → Upload skill. Start a chat and say what you want. Read the claude.ai row in the table above first: Claude will explain each step and you will run the commands.
 
 ---
 

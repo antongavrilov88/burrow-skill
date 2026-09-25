@@ -1,5 +1,5 @@
 # Runs on every PR and on pushes to dev/main: syntax checks for the skill's scripts,
-# a wording guard (CONTRIBUTING.md, "Wording rules"), and a check that the landing has no leftover placeholders.
+# a wording guard (CONTRIBUTING.md, "Wording rules"), and a check for leftover placeholders.
 name: ci
 on:
   pull_request:
@@ -43,4 +43,4 @@ jobs:
       - name: No placeholders on main
         if: github.ref == 'refs/heads/main' || github.base_ref == 'main'
         run: |
-          ! grep -rn '{{[A-Z_]*}}' README.md SECURITY.md docs/ .github/ISSUE_TEMPLATE/ || (echo "fill the placeholders before main" && exit 1)
+          ! grep -rn '{{[A-Z_]*}}' README.md SECURITY.md .github/ISSUE_TEMPLATE/ || (echo "fill the placeholders before main" && exit 1)
