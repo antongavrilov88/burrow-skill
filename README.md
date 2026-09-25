@@ -59,17 +59,32 @@ Whichever way you run it, two things are yours to bring: **a hosting account wit
 
 ## Quick start
 
-**Claude Code — copy the skill:**
-
-```bash
-git clone https://github.com/antongavrilov88/burrow-skill ~/.claude/skills/burrow
-```
-
-**Claude Code — or install it as a plugin** (later updates: `/plugin marketplace update burrow`):
+**Claude Code — install it as a plugin.** Type these in Claude Code's prompt, one at a time:
 
 ```
 /plugin marketplace add antongavrilov88/burrow-skill
+```
+
+```
 /plugin install burrow@burrow
+```
+
+From a shell instead, the same thing is `claude plugin marketplace add antongavrilov88/burrow-skill` and then `claude plugin install burrow@burrow`. Pasting `/plugin …` into a shell fails with "no such file or directory".
+
+To update later, refresh the catalog, update the plugin, and restart Claude Code. The first command alone only refreshes the catalog:
+
+```bash
+claude plugin marketplace update burrow
+```
+
+```bash
+claude plugin update burrow@burrow
+```
+
+**Claude Code — or copy the skill** (update with `git -C ~/.claude/skills/burrow pull`):
+
+```bash
+git clone https://github.com/antongavrilov88/burrow-skill ~/.claude/skills/burrow
 ```
 
 Then, in any session: *"set up my own VPN"*, *"VPN for my parents"*, *"подними мне VPN"*, or `/burrow` (`/burrow:burrow` when installed as a plugin).
