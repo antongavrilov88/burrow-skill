@@ -103,6 +103,9 @@ cache-file: "/var/lib/ntfy/cache.db"
 auth-file: "/var/lib/ntfy/user.db"
 auth-default-access: "deny-all"
 behind-proxy: true
+# iOS keeps no background connection; only ntfy.sh can wake the phone. Only
+# "new message" goes upstream — no text, no topic; the phone fetches the text here.
+upstream-base-url: "https://ntfy.sh"
 EOF
     chown -R ntfy:ntfy /var/lib/ntfy 2>/dev/null || true
     systemctl enable ntfy >/dev/null 2>&1 || true

@@ -144,6 +144,8 @@ The panel is in Russian for now — the buttons the person needs, with meanings 
 
 [relay] Before anyone else gets a QR: "Let's try the first phone on mobile data, with Wi-Fi off — that's the network that matters." Then: "Now I'll switch the bypass on for this phone. Same question: does YouTube open?"
 
+[relay] If Wi-Fi works and mobile data does not, fix that before anything else, in this order: re-issue this device on `alt_port` 443 («443 (для строгих сетей)» — "443 (for strict networks)") and try mobile data again; if it still will not connect, the relay's own address is not getting through that network, and the answer is a different provider in the users' country — not another setting. Do it now: the relay's IP is written into every config the panel issues, so moving the relay after the QR codes go out means re-issuing every device.
+
 [relay] The two warnings: "Some mobile operators cut this kind of connection on the usual port. If a phone won't connect on mobile data, we make it a 443 one — that goes through almost everywhere." And: "If their operator starts blocking the tunnel, everyone is moved to the direct route within a minute or two, automatically. The internet keeps working, just without the bypass, and they're moved back when it recovers. So 'the VPN is on but the sites don't open' means that, not that the whole thing is broken."
 
 ## §9 Notifications

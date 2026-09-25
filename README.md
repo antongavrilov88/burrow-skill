@@ -117,7 +117,7 @@ Everything is installed by a self-contained `setup-exit.sh` / `setup-relay.sh` t
 | `xray` in TPROXY mode + `nftables` | Routes selected devices (`proxied_src` set) through the disguised tunnel; everyone else goes direct |
 | `vpn-monitor` (`:8088`, VPN-only) | The web panel: status, traffic, QR issuing, direct-domain list |
 | `vpn-watchdog` (systemd) | Probe → repair → fail over → notify, every minute |
-| `vpn-drill` (systemd timer) | Monthly failover rehearsal at night; `--check` mode never breaks anything |
+| `vpn-drill` (systemd timer) | Monthly failover rehearsal at night; postpones itself while clients are active and runs detached from your SSH session; `--check` mode never breaks anything |
 | `vpn-split` | Rebuilds routing rules from `/etc/vpn-monitor/direct-domains.txt` |
 | `vpn-verify.sh`, `vpn-diag.sh` | Install verification and top-down diagnostics |
 

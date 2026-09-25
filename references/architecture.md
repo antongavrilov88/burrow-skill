@@ -117,6 +117,46 @@ An engineering estimate, not statistics.
 | The relay's provider starts filtering | medium, 6–12 months | only the tunnel is down, and plain HTTPS to the exit does not get through either | move the relay to another provider |
 | Allowlists on home networks | medium, ~12 months | almost nothing opens for people | second leg behind a CDN; the first leg is already right |
 | They learn to catch REALITY itself | low, within a year | mass complaints across the whole country | XHTTP via a CDN, or Hysteria2 |
+| The fallback turns out to be no fallback | medium, on carrier-restricted networks | failover works, but only local sites open until the exit is replaced | a standby exit (next section); until it exists, replace the exit fast |
+
+## A standby exit instead of the direct fallback
+
+**Not built.** A design note, kept here so the next person does not have to derive it again.
+
+Today the watchdog has exactly one place to put people when the tunnel dies: the
+relay's own direct route. On an ordinary network that is a real fallback — the
+internet keeps working, just without the tunnel. On a carrier-restricted network it
+barely is one: local sites stay reachable, foreign sites are unavailable, which is
+usually the part the household bought the VPN for. So the fallback that reads fine in
+a drill report is weakest exactly where the `relay` profile is most needed.
+
+**The shape.** A second exit — call it B — at a different provider and in a different
+region from A, with its own domain, its own cover site and its own REALITY key pair.
+The relay carries both as outbounds and fails over A → B → direct instead of
+A → direct. B costs one more small machine and carries traffic only while A is down.
+
+**What it buys.** An exit whose IP gets blocked stops being an outage: people land on
+B within the same minute or two it now takes to move them to the direct route, and
+replacing the banned exit turns from an emergency into unhurried maintenance. Monthly
+drills stop being visible to the household at all — the drill blocks A, everyone
+lands on B, foreign sites keep opening.
+
+**What it would touch**, if it is ever built:
+
+- `scripts/gen-secrets.py` — a second REALITY key pair and a second domain.
+- `scripts/build-installers.py` — the exit installer parameterised per exit, so B is
+  built from the same payload as A.
+- the relay's Xray config — a second outbound, and the routing rules that choose it.
+- `scripts/payload/common/vpn-watchdog.py` — failover order becomes A → B → direct,
+  plus a liveness probe for B so nobody is ever moved onto a dead standby.
+- `scripts/payload/common/vpn-drill.sh` — the drill blocks A only, and a pass becomes
+  "everyone is on B", not "everyone is on the direct route".
+- the panel — show which exit is live right now; otherwise nobody can tell.
+
+**Why it is not built.** It doubles the exit-side cost and the number of things that
+can rot unnoticed, to repair a fallback that may well be good enough for the
+households we actually have. It waits until paying users confirm that the direct
+fallback is useless for them.
 
 ## Privacy
 
