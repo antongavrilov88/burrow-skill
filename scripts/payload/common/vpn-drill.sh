@@ -2,9 +2,30 @@
 # Учебное падение основного канала: блокируем путь релей → выход на 443, смотрим, как отработает
 # сторож, снимаем блокировку. Страховка снимает её в любом случае.
 #
-#   vpn-drill.sh          — прогон с отчётом в уведомления
+# Почему обычный запуск уходит в фон: учения рвут ровно тот канал, через который оператор
+# чаще всего и подключён к серверу. Запущенный из такой ssh-сессии скрипт умрёт вместе с ней
+# посреди прогона — с уже поднятой блокировкой, которую снимет только страховочный таймер,
+# через SAFETY_MIN минут. Поэтому обычный запуск перезапускает себя отдельным systemd-юнитом
+# и сразу отдаёт управление; --fg выполняет прогон в текущем процессе (так его зовёт systemd).
+#
+#   vpn-drill.sh          — прогон с отчётом в уведомления, в фоновом юните
 #   vpn-drill.sh --check  — только проверка готовности, без падения
+#   vpn-drill.sh --force  — не откладывать, даже если каналом сейчас пользуются
+#   vpn-drill.sh --fg     — прогон в текущем процессе, без фонового юнита
 set -u
+CHECK=""; FORCE=""; FG=""
+for arg in "$@"; do
+  case "$arg" in
+    --check) CHECK=1 ;;
+    --force) FORCE=1 ;;
+    --fg)    FG=1 ;;
+    *) echo "неизвестный ключ: $arg" >&2
+       echo "использование: vpn-drill.sh [--check] [--force] [--fg]" >&2
+       exit 2 ;;
+  esac
+done
+# под systemd мы и так отдельный процесс — отделяться второй раз незачем
+[ -n "${INVOCATION_ID:-}" ] && FG=1
 . /etc/vpn-monitor/config.sh 2>/dev/null || true
 GW="${VPN_GW:-10.67.0.1}"
 if [ "${VPN_MODE:-relay}" = "single" ]; then
@@ -16,6 +37,9 @@ EXIT_IP=$(python3 -c "import json;print(json.load(open('/usr/local/etc/xray/conf
 STATE=/var/lib/vpn-monitor/health.json
 LOG=/var/lib/vpn-monitor/drill.log
 SAFETY_MIN=10
+STATS_DB=/var/lib/vpn-monitor/stats.db
+QUIET_SEC=300
+QUIET_MB=5
 
 notify() {
   python3 - "$1" "$2" "${3:-default}" <<'PY'
@@ -41,6 +65,28 @@ PYEOF
 tunnel_ok() { curl -s -m 8 -x socks5h://127.0.0.1:1080 -o /dev/null -w "%{http_code}" https://www.gstatic.com/generate_204 | grep -qE "20[04]"; }
 fallback_ok() { curl -s -m 8 --interface "$GW" -o /dev/null -w "%{http_code}" https://www.gstatic.com/generate_204 | grep -qE "20[04]"; }
 
+# Пользуется ли кто-нибудь каналом прямо сейчас: сумма дельт трафика за последние
+# QUIET_SEC секунд. Базы нет — смотрим на свежие рукопожатия WireGuard.
+anyone_active() {
+  if [ -f "$STATS_DB" ]; then
+    python3 - "$STATS_DB" "$QUIET_SEC" "$QUIET_MB" <<'PY'
+import sqlite3, sys, time
+db, quiet_sec, quiet_mb = sys.argv[1], int(sys.argv[2]), float(sys.argv[3])
+try:
+    conn = sqlite3.connect("file:%s?mode=ro" % db, uri=True)
+    row = conn.execute("SELECT COALESCE(SUM(rx+tx),0) FROM samples WHERE ts > ?",
+                       (int(time.time()) - quiet_sec,)).fetchone()
+except Exception:
+    sys.exit(2)
+sys.exit(0 if (row[0] or 0) > quiet_mb * 1024 * 1024 else 1)
+PY
+    rc=$?
+    [ "$rc" -le 1 ] && return "$rc"
+  fi
+  wg show wg-clients latest-handshakes 2>/dev/null \
+    | awk -v now="$(date +%s)" '$2 ~ /^[0-9]+$/ && $2 > 0 && now - $2 < 180 { active = 1 } END { exit active ? 0 : 1 }'
+}
+
 echo "=== $(date -Is) drill start" >> $LOG
 
 # --- проверка готовности: без неё падение устраивать нельзя
@@ -49,7 +95,29 @@ fallback_ok || { notify "Учения отменены" "Запасной пут
 systemctl is-active --quiet vpn-watchdog || { notify "Учения отменены" "Сторож не запущен, некому реагировать." high; echo "abort: watchdog down" >> $LOG; exit 1; }
 notify "Готовность к учениям" "Основной канал работает, запасной работает, сторож на посту." >/dev/null
 
-if [ "${1:-}" = "--check" ]; then echo "check ok" >> $LOG; exit 0; fi
+if [ -n "$CHECK" ]; then echo "check ok" >> $LOG; exit 0; fi
+
+# --- учения не должны ронять тех, кто прямо сейчас работает
+if [ -z "$FORCE" ] && anyone_active; then
+  notify "Учения отложены" "Каналом сейчас пользуются — прогон не проводился. Попробуем в следующий раз."
+  echo "skip: clients active" >> $LOG
+  echo "Каналом сейчас пользуются — учения отложены."
+  echo "Провести всё равно: /usr/local/sbin/vpn-drill.sh --force"
+  exit 3
+fi
+
+# --- уходим в отдельный юнит: разрыв ssh-сессии не должен убить прогон с поднятой блокировкой
+if [ -z "$FG" ]; then
+  systemctl stop vpn-drill-manual.service >/dev/null 2>&1 || true
+  systemctl reset-failed vpn-drill-manual.service >/dev/null 2>&1 || true
+  if systemd-run --unit=vpn-drill-manual --description="Учения по запросу" --quiet \
+       /usr/local/sbin/vpn-drill.sh --fg ${FORCE:+--force} >/dev/null 2>&1; then
+    echo "Учения запущены в фоне: минуту-две зарубежные сайты будут недоступны, местные продолжат открываться. Если вы подключены к серверу через этот VPN, ваша сессия оборвётся — так и задумано."
+    echo "Отчёт придёт push-уведомлением. Журнал: tail -n 20 /var/lib/vpn-monitor/drill.log"
+    exit 0
+  fi
+  echo "systemd-run не сработал — провожу учения в текущем процессе." >&2
+fi
 
 BEFORE=$(read_set); BEFORE="${BEFORE:-пусто}"
 echo "before: $BEFORE" >> $LOG

@@ -88,12 +88,34 @@ people to.
 ```bash
 sudo /usr/local/sbin/vpn-drill.sh --check   # readiness check only, breaks nothing
 sudo /usr/local/sbin/vpn-drill.sh           # a real outage of ~2 minutes
+sudo /usr/local/sbin/vpn-drill.sh --force   # ... even if people are online right now
 ```
 
 The full run: readiness check → block the path to the exit (the server abroad) →
 wait for failover → lift the block → wait for restore → compare the client set
 before and after → report via notifications. A safety net via
 `systemd-run --on-active=10min` lifts the block even if the script dies.
+
+**What the household sees.** For a minute or two foreign sites stop opening while
+local sites stay reachable; the failover moves everyone onto the direct route and
+the drill puts them back. Nobody has to touch a phone.
+
+**It postpones itself while people are using the channel.** Before breaking
+anything the drill adds up the last five minutes of traffic in
+`/var/lib/vpn-monitor/stats.db` — or, if that database is missing, looks for a
+WireGuard handshake in the last 180 s. Above 5 MB it sends a "postponed"
+notification, writes `skip: clients active` to the log and exits 3 without touching
+the route. `--force` runs it regardless; use it only when the person has said that
+everyone can wait.
+
+**A plain run detaches from your session.** The drill breaks the very path an
+operator usually reaches the server through, so it re-execs itself as the transient
+unit `vpn-drill-manual` and returns immediately — the report still arrives as a push
+if your SSH session dies with the channel, and the block is never left standing by a
+script that died halfway. `--fg` does the run in the current process instead; the
+timer units already run under systemd, so they take the `--fg` path by themselves and
+needed no change. If `systemd-run` fails, the script says so and continues in the
+foreground.
 
 It runs on its own on the night of the 1st of each month; the readiness check runs
 every Monday. Log: `/var/lib/vpn-monitor/drill.log`.

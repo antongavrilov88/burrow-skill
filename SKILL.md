@@ -181,6 +181,10 @@ sudo /usr/local/sbin/vpn-drill.sh --check    # safe, breaks nothing
 
 A full run — a real two-minute outage — **only with the person's consent and when nobody is using the VPN**. Ask it the way `lang/<xx>.md` puts it: "Want me to test it for real? I'll break the main channel for two minutes and watch the system get itself out. If nobody is watching a film right now, this is the moment." After that it happens by itself once a month, at night.
 
+**Your own session is part of the blast radius.** The drill breaks the relay's route out — if you reach this server *through* this VPN, your SSH session drops in the middle of the run. That is expected, and it is why a plain run detaches into its own systemd unit and hands the prompt straight back: start the drill, let the session go, come back in 3–5 minutes and read `tail -n 20 /var/lib/vpn-monitor/drill.log` (the verdict also arrives as a push).
+
+If anyone is pushing traffic at that moment the drill postpones itself instead of running (`skip: clients active`, exit 3) — that is the design, not a failure. **Never pass `--force` unless the person has said, in so many words, that everyone can wait**: it runs a real outage on top of people who are using the connection.
+
 (`single` has nothing to fail over to, so there is no drill. The watchdog still probes, restarts Xray and notifies.)
 
 ### 7. The first device
@@ -198,7 +202,8 @@ From the second device on, by §8: the person opens the panel from the device th
 1. The first device is a phone **on mobile data, Wi-Fi off**, on the users' side. Connect; "does youtube open?" — that is the direct route through the relay.
 2. Then switch the bypass on for that one device (the route switch on its row in the panel, or `«через туннель»` / "through the tunnel" when creating it) and ask the same question again.
 3. **Only after that hand out QR codes to anyone else.** Verify from a phone on mobile data first — a relay that only works over home Wi-Fi is not verified.
-4. Two warnings the person needs now, not after the first incident (`lang/<xx>.md` §8): mobile operators sometimes cut UDP on high ports — issue phones on port 443 when in doubt; and if their operator starts dropping the tunnel, the watchdog moves everyone to the direct route within a minute or two — the internet keeps working, without the bypass — and moves them back when the tunnel returns. "The VPN is on but sites don't open" is that state, not a broken system.
+4. **If Wi-Fi works and mobile data does not**, deal with it before anything else, in this order: re-issue that device on `alt_port` 443 («443 (для строгих сетей)») and test on mobile data again; if it still will not connect, the relay's own address is not getting through that network, and the fix is a **different provider in the users' country**, not another setting. This is why the test comes before the QR codes: the relay's IP is written into every config the panel issues, so moving the relay later means re-issuing every device.
+5. Two warnings the person needs now, not after the first incident (`lang/<xx>.md` §8): mobile operators sometimes cut UDP on high ports — issue phones on port 443 when in doubt; and if their operator starts dropping the tunnel, the watchdog moves everyone to the direct route within a minute or two — the internet keeps working, without the bypass — and moves them back when the tunnel returns. "The VPN is on but sites don't open" is that state, not a broken system.
 
 A spare entrance past the relay for the operator, if they are technical and want one: `python3 scripts/client-link.py --params params.json --label home`. In `single` this link is the normal way for Hiddify / v2rayNG users; an ordinary person does not need it either way — do not load them with it.
 
