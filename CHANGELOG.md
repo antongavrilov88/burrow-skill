@@ -2,7 +2,6 @@
 
 ## Unreleased
 
-- docs(skill): README quick start leads with the plugin install, one command per block, and states the update correctly: `claude plugin marketplace update burrow` only refreshes the catalog, `claude plugin update burrow@burrow` plus a restart upgrades. Says that `/plugin` is typed in Claude Code, not a shell. The `git clone` path stays as the alternative.
 - fix(landing): the comparison's free column is no longer half empty. The paid column had been carrying the chat mockup and five fine-print paragraphs — content that compares nothing — making it 1186px against the free column's 582px and leaving 739px of void inside the free card. Those now sit in their own row beneath the comparison; both columns are 691px.
 - feat(landing): hero rebuilt. The two offers were living inside the hero's left column at 352px wide while a 348px panel floated vertically centred against a 935px column, anchored to nothing. The headline row is now a top-aligned pair and the offers are a full-width row of 530px cards below it.
 - fix(landing): columns actually line up. The hero cards' label, amount, heading, body and button now share a baseline grid, and all four comparison rows align across both columns with the columns themselves equal height — previously the free column was 542px against the paid column's 1333px. The reservations are released below 760px, where the cards stack and alignment is meaningless.
@@ -15,6 +14,9 @@
 - docs(landing): UX review in `docs/UX-REVIEW.md` — persona walkthroughs, IA, CTA audit, trust, copy, mobile, accessibility and performance. Fixes applied from it: WCAG AA contrast in both themes (axe-core 23 dark + 3 light violations → 0/0), three evidence links for the verified / privacy / provider claims, a footer link that promised releases but pointed at the waitlist bot, the hero lede's jargon stack, and 25 CSS rules orphaned by the restructure.
 - feat(landing): English-only, global positioning. RU dictionary, `#ru` deep link and browser auto-detect removed; the dropdown architecture stays and hides itself while there is one language. Copy sweep: no region-specific wording anywhere (meta, OG, hero, why, agent tier, card section, bio); benefits lead with split tunneling, then privacy, then speed; "no foreign card?" became "card declined?"; bio is "developer, builds this in public".
 
+## 0.3.1 — 2026-09-25
+
+- docs(skill): README quick start leads with the plugin install, one command per block, and states the update correctly: `claude plugin marketplace update burrow` only refreshes the catalog, `claude plugin update burrow@burrow` plus a restart upgrades. Says that `/plugin` is typed in Claude Code, not a shell. The `git clone` path stays as the alternative.
 
 ## 0.3.0 — 2026-09-25
 
