@@ -14,6 +14,9 @@
 - docs(landing): UX review in `docs/UX-REVIEW.md` — persona walkthroughs, IA, CTA audit, trust, copy, mobile, accessibility and performance. Fixes applied from it: WCAG AA contrast in both themes (axe-core 23 dark + 3 light violations → 0/0), three evidence links for the verified / privacy / provider claims, a footer link that promised releases but pointed at the waitlist bot, the hero lede's jargon stack, and 25 CSS rules orphaned by the restructure.
 - feat(landing): English-only, global positioning. RU dictionary, `#ru` deep link and browser auto-detect removed; the dropdown architecture stays and hides itself while there is one language. Copy sweep: no region-specific wording anywhere (meta, OG, hero, why, agent tier, card section, bio); benefits lead with split tunneling, then privacy, then speed; "no foreign card?" became "card declined?"; bio is "developer, builds this in public".
 
+## 0.3.1 — 2026-09-25
+
+- docs(skill): README quick start leads with the plugin install, one command per block, and states the update correctly: `claude plugin marketplace update burrow` only refreshes the catalog, `claude plugin update burrow@burrow` plus a restart upgrades. Says that `/plugin` is typed in Claude Code, not a shell. The `git clone` path stays as the alternative.
 
 ## 0.3.0 — 2026-09-25
 
