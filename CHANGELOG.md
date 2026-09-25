@@ -14,6 +14,9 @@
 - docs(landing): UX review in `docs/UX-REVIEW.md` — persona walkthroughs, IA, CTA audit, trust, copy, mobile, accessibility and performance. Fixes applied from it: WCAG AA contrast in both themes (axe-core 23 dark + 3 light violations → 0/0), three evidence links for the verified / privacy / provider claims, a footer link that promised releases but pointed at the waitlist bot, the hero lede's jargon stack, and 25 CSS rules orphaned by the restructure.
 - feat(landing): English-only, global positioning. RU dictionary, `#ru` deep link and browser auto-detect removed; the dropdown architecture stays and hides itself while there is one language. Copy sweep: no region-specific wording anywhere (meta, OG, hero, why, agent tier, card section, bio); benefits lead with split tunneling, then privacy, then speed; "no foreign card?" became "card declined?"; bio is "developer, builds this in public".
 
+
+## 0.3.0 — 2026-09-25
+
 - docs(skill): global positioning — every country-specific term removed from the public surface (skill, references, README, landing strings, script comments and printed strings); the `relay` profile is described only as "your network restricts direct foreign connections or only allows listed IP ranges", with a home-country relay at any Ubuntu 24.04 provider. `references/providers/` gets Alibaba Cloud and ArvanCloud, and every provider file the same rows: signup requirements, machine/region/image, firewall, quirks, last-verified date; a neutral warning about home-country providers at the top of the relay section. Default split-tunnel list (`direct-domains.txt`) ships empty — fill it per household from the panel (`home_geoip` still routes home-country addresses directly). `CONTRIBUTING.md` "Wording rules" + `.github/wording-guard.sh` in CI. Printed strings in `make-handout.py` and the panel hint changed accordingly; no script logic changed.
 
 - `fix(installer)` — **iPhones get push notifications again.** `/etc/ntfy/server.yml` now
@@ -42,10 +45,6 @@
   fallback": why the direct fallback is weakest on carrier-restricted networks, the shape
   of an exit B, the files it would touch, and why it is not built until paying users
   confirm the direct fallback is useless for them.
-- Because the first two change what the installers put on a server, this is **at least a
-  minor bump** at release time (CONTRIBUTING, "Versioning"). The versions in
-  `.claude-plugin/plugin.json` and `marketplace.json` are bumped by the release step, not
-  here.
 
 ## 0.2.0 — 2026-09-24
 
