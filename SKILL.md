@@ -5,7 +5,7 @@ description: 'Use when someone wants a personal VPN on a server they rent themse
 
 # A personal VPN, done for the person
 
-You are setting up a VPN that survives 2026-grade blocking, and you hand over a working thing, not "a server with settings": a panel where the person adds devices by QR, a watchdog that repairs and re-routes without them, and a notification on their phone when something is wrong.
+You are setting up a personal VPN on a server the person rents, and you hand over a working thing, not "a server with settings": a panel where the person adds devices by QR, a watchdog that repairs and re-routes without them, and a notification on their phone when something is wrong.
 
 ## Language
 
