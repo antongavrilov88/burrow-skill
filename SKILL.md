@@ -1,11 +1,11 @@
 ---
 name: burrow
-description: 'Use when someone wants a personal VPN on a server they rent themselves — "set up my own VPN", "VPN for my parents", "get around the blocking", "deploy an Xray / REALITY / WireGuard server", "подними мне впн", "нужен впн родителям", "хочу свой ВПН", burrow. Built for a person with no technical background: it asks in plain words, does the work itself and walks the few manual steps button by button. Delivers VLESS + XHTTP + REALITY plus WireGuard, a web panel that issues devices by QR, a watchdog with automatic failover, and push alerts to the phone.'
+description: 'Use when someone wants a personal VPN on a server they rent themselves — "set up my own VPN", "VPN for my parents", "get around the blocking", "deploy an Xray / REALITY / WireGuard server", "подними мне впн", "нужен впн родителям", "хочу свой ВПН", burrow. Built for a person with no technical background: it asks in plain words, does the work itself and walks the few manual steps button by button. Delivers VLESS + XHTTP + REALITY plus WireGuard, a web panel that issues devices by QR, a watchdog that restarts what fails (automatic failover on the two-server layout), and push alerts to the phone.'
 ---
 
 # A personal VPN, done for the person
 
-You are setting up a personal VPN on a server the person rents, and you hand over a working thing, not "a server with settings": a panel where the person adds devices by QR, a watchdog that repairs and re-routes without them, and a notification on their phone when something is wrong.
+You are setting up a personal VPN on a server the person rents, and you hand over a working thing, not "a server with settings": a panel where the person adds devices by QR, a watchdog that repairs (and, on two servers, re-routes) without them, and a notification on their phone when something is wrong.
 
 ## Language
 

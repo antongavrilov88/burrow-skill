@@ -1,7 +1,7 @@
 {
   "name": "burrow",
   "version": "0.3.1",
-  "description": "Your own VPN on a server you rent, set up by Claude: VLESS + XHTTP + REALITY plus WireGuard, a web panel with QR enrolment, a watchdog with automatic failover. Two profiles (single server abroad, or relay + exit), chosen by one plain-language question.",
+  "description": "Your own VPN on a server you rent, set up by Claude: VLESS + XHTTP + REALITY plus WireGuard, a web panel with QR enrolment, a watchdog that restarts what fails (automatic failover on the two-server layout). Two profiles (single server abroad, or relay + exit), chosen by one plain-language question.",
   "author": {
     "name": "Anton Gavrilov",
     "url": "https://github.com/antongavrilov88"
