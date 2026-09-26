@@ -14,6 +14,11 @@
 - docs(landing): UX review in `docs/UX-REVIEW.md` — persona walkthroughs, IA, CTA audit, trust, copy, mobile, accessibility and performance. Fixes applied from it: WCAG AA contrast in both themes (axe-core 23 dark + 3 light violations → 0/0), three evidence links for the verified / privacy / provider claims, a footer link that promised releases but pointed at the waitlist bot, the hero lede's jargon stack, and 25 CSS rules orphaned by the restructure.
 - feat(landing): English-only, global positioning. RU dictionary, `#ru` deep link and browser auto-detect removed; the dropdown architecture stays and hides itself while there is one language. Copy sweep: no region-specific wording anywhere (meta, OG, hero, why, agent tier, card section, bio); benefits lead with split tunneling, then privacy, then speed; "no foreign card?" became "card declined?"; bio is "developer, builds this in public".
 
+## 0.4.0 — 2026-09-26
+
+- fix(installer): on the default one-server layout (`single`) the web panel no longer shows two-server-only route UI — the "Маршрут" column with a "напрямую" badge on every client, and the route wording in the traffic-chart and clients hints. They are hidden with the existing `.only-multipath` mechanism; the hints get a single-mode variant without the route part. The two-server (`relay`) panel is unchanged. This changes a file the installer puts on the server (`scripts/payload/common/dashboard.html`); no other script changes.
+- docs(installer): the relay's split-tunnel list (`direct-domains.txt`) ships seeded with payment and card networks that commonly refuse or step up verification from a data-centre address, and every source now says so: the file's own header no longer claims the list is empty, and `SKILL.md` no longer calls it a one-country list. The 0.3.0 entry saying the default list "ships empty" was wrong — the seeded domains were never removed. No domain was added or removed; comment lines only.
+
 ## 0.3.2 — 2026-09-26
 
 - fix(skill): the skill, plugin and marketplace descriptions no longer promise automatic failover unconditionally. On the default `single` layout the watchdog restarts Xray and alerts, with nothing to fail over to; failover (and, in the `SKILL.md` body, re-routing) is now stated as two-server (`relay`) only, matching the README. No script or installer change.

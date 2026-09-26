@@ -246,7 +246,7 @@ Both profiles end at the same scripts. What differs:
 | `params.json` fields you fill in | `exit_ip`, `ntfy_alert_token` | + `relay_ip` |
 | Devices connect to | the exit (`51821/udp`, `443/udp`) | the relay (`51821/udp`, `443/udp`) |
 | Panel, watchdog, WireGuard live on | the exit | the relay |
-| Split routing | none — everything goes through the server | `/etc/vpn-monitor/direct-domains.txt` on the relay (the shipped list is for one country — replace it for another, from the panel or the file) plus `home_geoip` |
+| Split routing | none — everything goes through the server | `/etc/vpn-monitor/direct-domains.txt` on the relay (ships seeded with payment and card networks that commonly refuse or step up verification from a data-centre address; add the household's own banks and apps from the panel or the file) plus `home_geoip` |
 | Drill (`vpn-drill.sh`) | not installed; nothing to fail over to | `--check` at once; full run with consent; monthly by timer |
 | First device | any network | phone on mobile data first, then the bypass, then everyone else |
 | `client-link.py` (`vless://`) | the normal path for Hiddify / v2rayNG users | the operator's spare entrance past the relay |
