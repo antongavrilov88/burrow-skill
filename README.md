@@ -1,10 +1,12 @@
 # Burrow
 
-**Your own VPN in five minutes. No shared servers, no company to block.**
+**Your own VPN on a server you rent: your own address, not one shared with thousands of strangers.**
 
-Burrow is a free [Claude](https://claude.ai) skill that turns a $6 cloud server you rent into a personal VPN that survives 2026-grade blocking. You create the server and buy a domain; Claude installs everything, hands you a web panel, and you add phones and laptops by scanning a QR code.
+Burrow is a free [Claude](https://claude.ai) skill that turns a $6 cloud server you rent into a personal VPN. You create the server and buy a domain; Claude installs everything, hands you a web panel (buttons in Russian for now), and you add phones and laptops by scanning a QR code.
 
-The server is yours. The domain is yours. The keys never leave your machine. There is no Burrow account, no Burrow backend, and nothing for anyone to shut down except your own server — which you can rebuild in fifteen minutes.
+How long it takes: your clicks, then about 10 minutes while it installs. A new domain takes 15 minutes to a few hours to go live, and a new hosting account is sometimes reviewed for a few hours.
+
+The server is yours. The domain is yours. The keys never leave your machine. There is no Burrow account, no Burrow backend, and nothing for anyone to shut down except your own server — which you can rebuild.
 
 > Made for one situation: people you care about live where the internet is filtered, and every "install our app" VPN keeps dying. Works in both directions — reaching services back home from abroad, or reaching the world from behind a filter.
 
@@ -14,9 +16,9 @@ The server is yours. The domain is yours. The keys never leave your machine. The
 
 - **A protocol that looks like ordinary web traffic.** VLESS + XHTTP + REALITY on Xray, on port 443, with a real website under your own domain as the cover. To a probe your server *is* a normal HTTPS site, because it is one.
 - **WireGuard for the devices.** Phones, laptops, TVs and routers connect with the official free WireGuard app. Scan a QR, flip a switch, done. A second port on UDP/443 for hotel and mobile networks that cut everything else.
-- **A web panel** (reachable only from inside the VPN): who is online, how much they used, add or remove a device with a QR code, manage the list of domains that bypass the tunnel.
-- **A watchdog** that probes the tunnel every minute, restarts what died, fails over to the direct route and back, and pushes a notification to your phone. A monthly fire drill (a deliberate two-minute outage) proves the failover actually works, not just "is configured".
-- **Split routing.** Banks and government sites that break when they see a foreign IP go direct; everything else goes through the tunnel. Optional per-country GeoIP rule.
+- **A web panel** (reachable only from inside the VPN): who is online, how much they used, add or remove a device with a QR code, and on two servers manage the list of domains that bypass the tunnel.
+- **A watchdog** that checks the tunnel every 30 seconds, restarts what it can and pushes a notification to your phone. On two servers (the `relay` profile) it also moves everyone to the direct route and back, and a monthly fire drill (a deliberate two-minute outage) proves that failover actually works, not just "is configured". One server has nothing to fail over to, so it has no failover and no drill.
+- **Split routing, on two servers only** (the `relay` profile). Apps that refuse VPN connections — banks, government sites — go direct from the home-country relay; everything else goes through the tunnel. Optional per-country GeoIP rule. On one server everything goes through the server.
 - **Push notifications** through your own [ntfy](https://ntfy.sh) instance on the same server (public ntfy.sh as fallback).
 - **A one-page handout** for the person who will actually use it, in plain words and in their language, generated at the end.
 
@@ -131,9 +133,9 @@ Everything is installed by a self-contained `setup-exit.sh` / `setup-relay.sh` t
 | WireGuard `wg-clients` | Device tunnel, `10.67.0.0/24`, port 51821 + redirect from UDP/443 |
 | `xray` in TPROXY mode + `nftables` | Routes selected devices (`proxied_src` set) through the disguised tunnel; everyone else goes direct |
 | `vpn-monitor` (`:8088`, VPN-only) | The web panel: status, traffic, QR issuing, direct-domain list |
-| `vpn-watchdog` (systemd) | Probe → repair → fail over → notify, every minute |
-| `vpn-drill` (systemd timer) | Monthly failover rehearsal at night; postpones itself while clients are active and runs detached from your SSH session; `--check` mode never breaks anything |
-| `vpn-split` | Rebuilds routing rules from `/etc/vpn-monitor/direct-domains.txt` |
+| `vpn-watchdog` (systemd) | Probe every 30 s → repair → notify; fail over to the direct route only on two servers (`relay`) |
+| `vpn-drill` (systemd timer, `relay` only) | Monthly failover rehearsal at night; postpones itself while clients are active and runs detached from your SSH session; `--check` mode never breaks anything |
+| `vpn-split` (`relay` only) | Rebuilds routing rules from `/etc/vpn-monitor/direct-domains.txt` |
 | `vpn-verify.sh`, `vpn-diag.sh` | Install verification and top-down diagnostics |
 
 Config lives in `/etc/vpn-monitor/` and `/etc/wireguard/`; state in `/var/lib/vpn-monitor/`. Nothing phones home to anyone but your own ntfy.
@@ -198,7 +200,7 @@ Internally the scripts still call themselves `vpn-kit` (`/opt/vpn-kit`, `/root/v
 
 The skill and this guide are free and stay free. If you get stuck, open an issue or message me on Telegram: [@bepatientlikeme](https://t.me/bepatientlikeme).
 
-If you'd rather not do it at all: one price, your server, ready in about an hour — [burrow site](https://antongavrilov88.github.io/burrow/). The server stays yours; I never hold your card or your account.
+If you'd rather not do it at all: a hosted agent does the setup in a chat for $29 once, paid to Burrow. It opens in November — [join the waitlist](https://t.me/burrow_vpn_bot); details on the [burrow site](https://antongavrilov88.github.io/burrow/). Not included: the server and the domain, billed by your providers. Refund: automatic if the check fails; otherwise on request within 14 days. It covers the setup, not your network. At launch: DigitalOcean only, panel buttons in Russian. The server stays yours; I never hold your card or your account.
 
 ## Who's behind this
 
