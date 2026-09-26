@@ -183,7 +183,7 @@ body[data-mode="single"] .only-single{display:inline}
 
   <section class="card">
     <h2>Трафик по времени</h2>
-    <p class="hint">Суммарно вверх и вниз, по маршруту. Наведи курсор для точных значений.</p>
+    <p class="hint"><span class="only-multipath">Суммарно вверх и вниз, по маршруту.</span><span class="only-single">Суммарно вверх и вниз.</span> Наведи курсор для точных значений.</p>
     <div class="legend">
       <span class="only-multipath"><i class="swatch" style="background:var(--series-reality)"></i>Через туннель</span>
       <span><i class="swatch" style="background:var(--series-wg)"></i><span class="only-multipath">Напрямую (резерв)</span><span class="only-single">Трафик клиентов</span></span>
@@ -199,7 +199,7 @@ body[data-mode="single"] .only-single{display:inline}
 
   <section class="card">
     <h2>Клиенты</h2>
-    <p class="hint">Маршрут, активность и объём. Что именно открывают пользователи — не собирается.</p>
+    <p class="hint"><span class="only-multipath">Маршрут, активность и объём.</span><span class="only-single">Активность и объём.</span> Что именно открывают пользователи — не собирается.</p>
     <div class="toolbar">
       <div class="filters" role="group" aria-label="Фильтр">
         <button data-f="all" aria-pressed="true">Все</button>
@@ -224,7 +224,7 @@ body[data-mode="single"] .only-single{display:inline}
     <div style="overflow-x:auto"><table id="tbl">
       <thead><tr>
         <th class="sortable" data-s="name">Клиент<span class="arrow"></span></th>
-        <th class="sortable col-path" data-s="path">Маршрут<span class="arrow"></span></th>
+        <th class="sortable col-path only-multipath" data-s="path">Маршрут<span class="arrow"></span></th>
         <th class="sortable" data-s="hs">Активность<span class="arrow"></span></th>
         <th class="sortable num" data-s="rx">Вниз<span class="arrow"></span></th>
         <th class="sortable num" data-s="tx">Вверх<span class="arrow"></span></th>
@@ -472,7 +472,7 @@ function table(d) {
     const col = c.path==="reality" ? "var(--series-reality)" : "var(--series-wg)";
     return `<tr>
       <td><span class="name">${c.name}</span><span class="ip">${c.ip}</span></td>
-      <td class="col-path"><span class="badge"><i class="dot-s" style="background:${col}"></i>${c.path==="reality"?"туннель":"напрямую"}</span></td>
+      <td class="col-path only-multipath"><span class="badge"><i class="dot-s" style="background:${col}"></i>${c.path==="reality"?"туннель":"напрямую"}</span></td>
       <td><span class="badge"><i class="dot-s" style="background:${c.online?"var(--good)":"var(--muted-dot)"}"></i>${c.online?"онлайн":ago(c.hs)}</span></td>
       <td class="num">${fmt(c.rx)}</td><td class="num">${fmt(c.tx)}</td><td class="num">${fmt(c.rx+c.tx)}</td>
       <td class="actions">
